@@ -1,5 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { CourseTypes, WorkOutTypes } from '../../sharedTypes/shared.Types';
+import {
+  CourseTypes,
+  ProgressWorkOutCourseTypes,
+  WorkOutTypes,
+} from '../../sharedTypes/shared.Types';
 
 type initialStateType = {
   currentCourse: CourseTypes | null;
@@ -12,8 +16,13 @@ type initialStateType = {
   isCourseAdded: boolean;
   addedCourseId: string | null;
   myCourseIds: string[];
-  currentProgress: number[];
-  workouts: WorkOutTypes[];
+  currentProgress: number[]; // по тренировке
+  currentProgressCourse: ProgressWorkOutCourseTypes[]; //  по курсу
+  totalWorkoutProgress: number | null; // по тренировке
+  workouts: WorkOutTypes[]; // все по курсу
+  workoutData: WorkOutTypes | null; // по тренировке
+  completedStatus: boolean;
+  completedWorkout: string[];
 };
 
 const initialState: initialStateType = {
@@ -28,7 +37,12 @@ const initialState: initialStateType = {
   addedCourseId: null,
   myCourseIds: [],
   currentProgress: [],
+  currentProgressCourse: [],
+  totalWorkoutProgress: null,
   workouts: [],
+  workoutData: null,
+  completedStatus: false,
+  completedWorkout: [],
 };
 
 const courseSlice = createSlice({
@@ -55,28 +69,36 @@ const courseSlice = createSlice({
       state.currentProgress = action.payload;
     },
 
+    setTotalWorkoutProgress: (state, action: PayloadAction<number>) => {
+      state.totalWorkoutProgress = action.payload;
+    },
+
+    setCurrentProgressCourse: (
+      state,
+      action: PayloadAction<ProgressWorkOutCourseTypes[]>,
+    ) => {
+      state.currentProgressCourse = action.payload;
+    },
+
     setWorkouts: (state, action: PayloadAction<WorkOutTypes[]>) => {
       state.workouts = action.payload;
+    },
+
+    setWorkoutData: (state, action: PayloadAction<WorkOutTypes | null>) => {
+      state.workoutData = action.payload;
+    },
+
+    setCompleted: (state, action: PayloadAction<boolean>) => {
+      state.completedStatus = action.payload;
+    },
+
+    setCompletedWorkout: (state, action: PayloadAction<string>) => {
+      state.completedWorkout = [...state.completedWorkout, action.payload];
     },
 
     addCourse: (state, action: PayloadAction<CourseTypes>) => {
       state.myCourses = [...state.myCourses, action.payload];
     },
-
-    // removeCourse: (state, action: PayloadAction<CourseTypes>) => {
-    //   state.myCourses = state.myCourses.filter(
-    //     (course) => course._id !== action.payload._id,
-    //   );
-    // },
-
-    // addCourse: (state, action: PayloadAction<CourseTypes>) => {
-    //   if (!state.myCourses.some(c => c._id === action.payload._id)) {
-    //     state.myCourses = [...state.myCourses, action.payload];
-    //   }
-    //   state.isCourseAdded = true;
-    //   state.addedCourseId = action.payload._id;
-
-    // },
 
     removeCourse: (state, action: PayloadAction<CourseTypes>) => {
       state.myCourses = state.myCourses.filter(
@@ -87,10 +109,13 @@ const courseSlice = createSlice({
       state.addedCourseId = null;
     },
 
-    // resetCourseAdditionStatus: (state) => {
-    //     state.isCourseAdded = false;
-    //     state.addedCourseId = null;
-    // },
+    resetCourseAdditionStatus: (state) => {
+      state.currentProgress = [];
+      state.currentProgressCourse = [];
+      state.totalWorkoutProgress = null;
+      state.completedStatus = false;
+      state.completedWorkout = [];
+    },
 
     setFetchError: (state, action: PayloadAction<string>) => {
       state.fetchError = action.payload;
@@ -113,5 +138,11 @@ export const {
   setMyCourseIds,
   setCurrentProgress,
   setWorkouts,
+  setCompletedWorkout,
+  setWorkoutData,
+  setTotalWorkoutProgress,
+  setCurrentProgressCourse,
+  setCompleted,
+  resetCourseAdditionStatus,
 } = courseSlice.actions;
 export const courseSliceReducer = courseSlice.reducer;

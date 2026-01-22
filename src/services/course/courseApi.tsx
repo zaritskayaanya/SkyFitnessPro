@@ -2,6 +2,7 @@ import axios from 'axios';
 import { BASE_URL } from '../constants';
 import {
   CourseTypes,
+  ProgressWorkOutCourseTypes,
   ProgressWorkOutTypes,
   UserTypes,
   WorkOutTypes,
@@ -21,7 +22,7 @@ export const getToken = async ({
   password,
 }: authUserForm): Promise<TokenType> => {
   const res = await axios.post(
-    BASE_URL + '/api/fitness/auth/login/',
+    BASE_URL + '/api/fitness/auth/login',
     { email, password },
     {
       headers: { 'Content-Type': '' },
@@ -37,16 +38,17 @@ export const getCourses = async (): Promise<CourseTypes[]> => {
 };
 
 export const getCoursesMe = async (token: string): Promise<UserTypes> => {
-  const res = await axios.get(BASE_URL + `/api/fitness/users/me/`, {
+  const res = await axios.get(BASE_URL + `/api/fitness/users/me`, {
     headers: { 'Content-Type': '', Authorization: `Bearer ${token}` },
   });
   return res.data;
 };
 
 export const getCoursesId = async (courseId: string): Promise<CourseTypes> => {
-  const res = await axios.get(BASE_URL + `/api/fitness/courses/${courseId}/`, {
-    headers: { 'Content-Type': '' },
-  });
+  const res = await axios.get(
+    BASE_URL + `/api/fitness/courses/${courseId}`,
+    {},
+  );
   return res.data;
 };
 
@@ -102,9 +104,9 @@ export const removeCourseProgress = (token: string, courseId: string) => {
 export const getProgressCourse = async (
   courseId: string,
   token: string,
-): Promise<ProgressWorkOutTypes> => {
+): Promise<ProgressWorkOutCourseTypes[]> => {
   const res = await axios.get(
-    BASE_URL + `/api/fitness/users/me/progress?courseId=${courseId}/`,
+    BASE_URL + `/api/fitness/users/me/progress?courseId=${courseId}`,
     {
       headers: { 'Content-Type': '', Authorization: `Bearer ${token}` },
     },
@@ -114,13 +116,13 @@ export const getProgressCourse = async (
 
 //Получить прогресс пользователя по тренировке.
 export const getProgressTrain = async (
-  workoutId: string,
   courseId: string,
+  workoutId: string,
   token: string,
 ): Promise<ProgressWorkOutTypes> => {
   const res = await axios.get(
     BASE_URL +
-      `/api/fitness/users/me/progress?courseId=${courseId}&workoutId=${workoutId}/`,
+      `/api/fitness/users/me/progress?courseId=${courseId}&workoutId=${workoutId}`,
     {
       headers: { 'Content-Type': '', Authorization: `Bearer ${token}` },
     },
@@ -130,10 +132,10 @@ export const getProgressTrain = async (
 
 //Сохранить прогресс тренировки.
 export const saveTrainProgress = (
-  token: string,
   courseId: string,
   workoutId: string,
   progressPayload: { progressData: number[] },
+  token: string,
 ): Promise<ProgressWorkOutTypes> => {
   return axios.patch(
     BASE_URL + `/api/fitness/courses/${courseId}/workouts/${workoutId}`,
@@ -143,20 +145,13 @@ export const saveTrainProgress = (
     },
   );
 };
-// {
-//   "progressData": [10, 10, 15]
-// }
 
 //Удалить весь прогресс по курсу.
 export const deleteAllCourseProgress = (
-  token: string,
   courseId: string,
-  workoutId: string,
+  token: string,
 ) => {
-  return axios.patch(
-    BASE_URL + `/api/fitness/courses/${courseId}/workouts/${workoutId}/reset`,
-    {
-      headers: { 'Content-Type': '', Authorization: `Bearer ${token}` },
-    },
-  );
+  return axios.patch(BASE_URL + `/api/fitness/courses/${courseId}/reset`, {
+    headers: { 'Content-Type': '', Authorization: `Bearer ${token}` },
+  });
 };

@@ -24,7 +24,7 @@ export default function ModalUser() {
   const onLogout = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
     dispatch(logout());
-    router.push('/auth/login');
+    router.push('/');
   };
 
   return (

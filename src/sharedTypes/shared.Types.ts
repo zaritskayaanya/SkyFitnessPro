@@ -28,14 +28,16 @@ export interface WorkOutTypes {
 }
 
 export interface ProgressWorkOutTypes {
+  workoutId: string;
+  workoutCompleted: boolean;
+  progressData: number[];
+}
+
+export interface ProgressWorkOutCourseTypes {
   courseId: string;
   courseCompleted: boolean;
   workoutsProgress: [
-    {
-      workoutId: string;
-      workoutCompleted: boolean;
-      progressData: number[];
-    },
+    { workoutId: string; workoutCompleted: boolean; progressData: number[] },
   ];
 }
 

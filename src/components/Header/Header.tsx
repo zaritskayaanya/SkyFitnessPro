@@ -12,7 +12,7 @@ import { useModal } from '../../context/ModalContext';
 export default function Header() {
   const user = useAppSelector((state) => state.auth.user);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoading, seteIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { openLogin } = useModal();
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);

@@ -20,12 +20,13 @@ export default function ModalWorkOut({ courseId, onClose }: ModalWorkOutProps) {
   const router = useRouter();
 
   const [errorMessage, setErrorMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedWorkoutId, setSelectedWorkoutId] = useState<string | null>(
     null,
   );
-  const {workouts} = useAppSelector((state) => state.course);
-const completedWorkoutIds = ['workout_id_1', 'workout_id_2'];
+  const { workouts, completedWorkout } = useAppSelector(
+    (state) => state.course,
+  );
 
   useEffect(() => {
     if (!courseId || !token) {
@@ -34,7 +35,6 @@ const completedWorkoutIds = ['workout_id_1', 'workout_id_2'];
 
     getWorkOutList(courseId, token)
       .then((res: WorkOutTypes[]) => {
-        console.log(res);
         dispatch(setWorkouts(res));
         if (res.length > 0) {
           setSelectedWorkoutId(res[0]._id);
@@ -57,8 +57,6 @@ const completedWorkoutIds = ['workout_id_1', 'workout_id_2'];
       });
   }, [courseId, token, dispatch]);
 
-
-
   const onSubmit = async (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
   ) => {
@@ -79,34 +77,11 @@ const completedWorkoutIds = ['workout_id_1', 'workout_id_2'];
       <div className={styles.containerEnter}>
         <div className={styles.modal__block}>
           <form className={styles.modal__form}>
-            <button className={styles.modal__close} onClick={onClose}>X</button>
+            <button className={styles.modal__close} onClick={onClose}>
+              X
+            </button>
             <h3 className={styles.modal__title}>Выберите тренировку</h3>
-            {/* <div className={styles.inputContainer}>
-              {isLoading ? (
-                <span style={{ color: 'white' }}>Загрузка тренировок...</span>
-              ) : workouts.length === 0 ? (
-                <p>Тренировок нет.</p>
-              ) : (
-                workouts.map((workout) => (
-                    
-                  <div key={workout._id} >
-                    <input
-                      type="radio"
-                      id={`workout-${workout._id}`}
-                      name="selectedWorkout"
-                      value={workout._id}
-                      checked={selectedWorkoutId === workout._id}
-                      onChange={() => setSelectedWorkoutId(workout._id)}
-                    />
-                    <label htmlFor={`workout-${workout._id}`}>
-                      {workout.name}
-                    </label>
-                    <p>Упражнений: {workout.exercises.length}</p>
-                  </div>
-                ))
-              )}
-              <div className={styles.errorContainer}>{errorMessage}</div>
-            </div> */}
+
             <div className={styles.inputContainer}>
               {isLoading ? (
                 <span style={{ color: 'white' }}>Загрузка тренировок...</span>
@@ -114,51 +89,42 @@ const completedWorkoutIds = ['workout_id_1', 'workout_id_2'];
                 <p>Тренировок нет.</p>
               ) : (
                 workouts.map((workout) => {
-                    
-                    const isSelected = selectedWorkoutId === workout._id;
-                    const isCompleted = completedWorkoutIds.includes(workout._id);
-                    
-         
-                    const itemClassName = [
-                        styles.workoutItem,
-                        isSelected ? styles.selectedItem : '',
-                        isCompleted ? styles.completed : ''
-                    ].join(' ');
+                  const isSelected = selectedWorkoutId === workout._id;
+                  const isCompleted = completedWorkout.includes(workout._id);
 
-                    return (
-                       
-                        <label 
-                            key={workout._id} 
-                            className={itemClassName}
-                            htmlFor={`workout-${workout._id}`}
-                        >
-                        
-                            <input
-                                type="radio"
-                                id={`workout-${workout._id}`}
-                                name="selectedWorkout"
-                                value={workout._id}
-                                checked={isSelected}
-                                onChange={() => setSelectedWorkoutId(workout._id)}
-                                className={`${styles.workoutInput} ${isCompleted ? styles.completed : ''}`}
-                                disabled={isCompleted} 
-                            />
-                            
-                         
-                            <div className={styles.customIndicator}>
-                               
-                            </div>
-                            
-                     
-                            <div className={styles.workoutLabel}>
-                                <span className={styles.workoutName}>{workout.name}</span>
-                                <span className={styles.workoutSubtitle}>
-                                    / День {workout._id.substring(0, 1)} 
-                                    {/* Замените на реальное получение номера дня, если нужно */}
-                                </span>
-                            </div>
-                        </label>
-                    );
+                  const itemClassName = [
+                    styles.workoutItem,
+                    isSelected ? styles.selectedItem : '',
+                    isCompleted ? styles.completed : '',
+                  ].join(' ');
+
+                  return (
+                    <label
+                      key={workout._id}
+                      className={itemClassName}
+                      htmlFor={`workout-${workout._id}`}
+                    >
+                      <input
+                        type="radio"
+                        id={`workout-${workout._id}`}
+                        name="selectedWorkout"
+                        value={workout._id}
+                        checked={isSelected}
+                        onChange={() => setSelectedWorkoutId(workout._id)}
+                        className={`${styles.workoutInput} ${isCompleted ? styles.completed : ''}`}
+                        disabled={isCompleted}
+                      />
+
+                      <div className={styles.customIndicator}></div>
+
+                      <div className={styles.workoutLabel}>
+                        <span className={styles.workoutName}>
+                          {workout.name}
+                        </span>
+                        <span className={styles.workoutSubtitle}></span>
+                      </div>
+                    </label>
+                  );
                 })
               )}
               <div className={styles.errorContainer}>{errorMessage}</div>
@@ -169,7 +135,6 @@ const completedWorkoutIds = ['workout_id_1', 'workout_id_2'];
               fullWidth={true}
               text="Начать"
             />
-            
           </form>
         </div>
       </div>

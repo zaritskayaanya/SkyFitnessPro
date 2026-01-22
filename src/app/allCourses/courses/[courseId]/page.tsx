@@ -21,9 +21,9 @@ export default function Course() {
   const [isLoading, setIsLoading] = useState(false);
   const [course, setCourses] = useState<CourseTypes | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const {openLogin} = useModal();
+  const { openLogin } = useModal();
   const courseID = params.courseId;
-   const { toggleAddRemove, isAdd} = useCourse(course);
+  const { toggleAddRemove, isAdd } = useCourse(course);
 
   useEffect(() => {
     if (!courseID) return;
@@ -105,11 +105,13 @@ export default function Course() {
         <div className={styles.course__category}>
           {course.directions.map((directionsText, index) => (
             <div key={index} className={styles.course__categoryName}>
-              <div className={styles.course__categoryImage}>
-                <svg className={styles.course__categorySvg}>
-                  <use xlinkHref="/icon/Icon_Star.svg"></use>
-                </svg>
-              </div>
+              <Image
+                src="/icon/Icon_Star.svg"
+                alt="star"
+                loading="eager"
+                height={26}
+                width={26}
+              />
               <p className={styles.course__categoryText}>{directionsText}</p>
             </div>
           ))}
@@ -156,18 +158,22 @@ export default function Course() {
                 помогают противостоять стрессам
               </li>
             </ul>
-            {user && ((isAdd ? (<BaseButton
-                disabled={isLoading}
-                onClick={toggleAddRemove}
-                fullWidth={true}
-                text={'Удалить курс'}
-              />) : (<BaseButton
-                disabled={isLoading}
-                onClick={toggleAddRemove}
-                fullWidth={true}
-                text={'Добавить курс'}
-              />))
-            )}
+            {user &&
+              (isAdd ? (
+                <BaseButton
+                  disabled={isLoading}
+                  onClick={toggleAddRemove}
+                  fullWidth={true}
+                  text={'Удалить курс'}
+                />
+              ) : (
+                <BaseButton
+                  disabled={isLoading}
+                  onClick={toggleAddRemove}
+                  fullWidth={true}
+                  text={'Добавить курс'}
+                />
+              ))}
             {!user && (
               <BaseButton
                 disabled={isLoading}

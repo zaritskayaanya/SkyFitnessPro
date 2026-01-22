@@ -9,7 +9,7 @@ import Image from 'next/image';
 import CoursesBlock from '../../../../components/CoursesBlock/CoursesBlock';
 import { useRouter } from 'next/navigation';
 import { getCoursesMe } from '../../../../services/course/courseApi';
-import { useEffect } from 'react';
+import { useEffect} from 'react';
 import {
   setFetchError,
   setFetchIsLoading,
@@ -62,7 +62,7 @@ export default function MeCourses() {
         });
     }
   }, [dispatch, token, myCourses.length, fetchIsLoading]);
-  
+
   useEffect(() => {
     if (myCourseIds.length > 0 && allCourses.length > 0) {
       const filteredCourses = allCourses.filter((course) =>
@@ -72,6 +72,12 @@ export default function MeCourses() {
       dispatch(setMyCourses(filteredCourses));
     }
   }, [myCourseIds, allCourses, dispatch]);
+
+  if (fetchIsLoading) {
+    return (
+      <div style={{ color: 'white', padding: '20px' }}>Загрузка данных ...</div>
+    );
+  }
 
   return (
     <>
@@ -102,13 +108,11 @@ export default function MeCourses() {
         </div>
         <h1 className={styles.course__descTitle}>Мои курсы</h1>
         <div className={styles.center__courses}></div>
-        (
         <CoursesBlock
           courses={myCourses}
           errorRes={fetchError}
           isLoading={fetchIsLoading}
         />
-        )
       </div>
     </>
   );

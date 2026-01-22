@@ -2,15 +2,29 @@
 
 import Image from 'next/image';
 import styles from '../CenterBlock/centerBlock.module.css';
-import { useRouter } from 'next/navigation';
-import { useAppSelector } from '../../store/store';
-import { useState } from 'react';
-import { CourseTypes } from '../../sharedTypes/shared.Types';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAppDispatch, useAppSelector } from '../../store/store';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  CourseTypes,
+  ProgressWorkOutCourseTypes,
+} from '../../sharedTypes/shared.Types';
 import BaseButton from '../Button/Button';
 import { useCourse } from '../../hooks/useCourse';
 import { useModal } from '../../context/ModalContext';
 import ModalWorkOut from '../ModalWorkOut/ModalWorkOut';
-import { setCurrentCourse } from '../../store/features/courseSlice';
+import {
+  resetCourseAdditionStatus,
+  setCompleted,
+  setCurrentCourse,
+  setCurrentProgressCourse,
+} from '../../store/features/courseSlice';
+import {
+  deleteAllCourseProgress,
+  getProgressCourse,
+} from '../../services/course/courseApi';
+import { AxiosError } from 'axios';
+import { useCourseProgress } from '../../hooks/useCourseProgress';
 
 interface CourseTypeProp {
   course: CourseTypes;
@@ -20,33 +34,101 @@ interface CourseTypeProp {
 export default function CourseCard({ course }: CourseTypeProp) {
   const courseId = course._id;
   const router = useRouter();
+  const pathname = usePathname();
   const { openLogin } = useModal();
   const user = useAppSelector((state) => state.auth.user);
+  const token = useAppSelector((state) => state.auth.token);
   const { toggleAddRemove } = useCourse(course);
-  const [isLoading, seteIsLoading] = useState(false);
+  const dispatch = useAppDispatch();
   const isCourseInMyCourses = useAppSelector((state) =>
     state.course.myCourses.some((c) => c._id === course._id),
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { currentProgress } = useAppSelector((state) => state.course);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!courseId || !token) {
+      return;
+    }
+
+    getProgressCourse(courseId, token)
+      .then((res: ProgressWorkOutCourseTypes[]) => {
+        setCurrentProgressCourse(res);
+        if (res.length > 0) {
+          const completionStatus = res[0].courseCompleted;
+          setCompleted(completionStatus);
+        }
+      })
+      .catch((error) => {
+        if (error instanceof AxiosError) {
+          if (error.response) {
+            console.log(error.response.data);
+            setErrorMessage(error.response.data.message);
+          } else if (error.request) {
+            setErrorMessage('Что-то с интернетом');
+          } else {
+            setErrorMessage('Неизвестная ошибка');
+          }
+        }
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [courseId, token]);
+
+  const finalPercentage = useCourseProgress();
 
   const onCourse = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     e.preventDefault();
-    seteIsLoading(true);
+    setIsLoading(true);
     router.push(`/allCourses/courses/${courseId}`);
   };
 
-  const onWorkOut = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    e.preventDefault();
-    seteIsLoading(true);
-    openWorkOut();
-  };
-  const openWorkOut = () => {
-    setCurrentCourse(course);
-    setIsModalOpen(!isModalOpen);
-  };
+  const handleStartOrContinue = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+      e.preventDefault();
+      setIsLoading(true);
+
+      setCurrentCourse(course);
+      setIsModalOpen(true);
+
+      setIsLoading(false);
+    },
+    [course, setIsModalOpen],
+  );
+
+  const handleReset = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+      e.preventDefault();
+      setIsLoading(true);
+
+      deleteAllCourseProgress(courseId, token).finally(() => {
+        setIsLoading(false);
+        dispatch(resetCourseAdditionStatus());
+      });
+    },
+    [courseId, token, dispatch],
+  );
+
+  let buttonAction;
+  let buttonText;
+
+  if (finalPercentage === 100) {
+    buttonText = 'Начать заново';
+    buttonAction = handleReset;
+  } else if (finalPercentage > 0) {
+    buttonText = 'Продолжить';
+    buttonAction = handleStartOrContinue;
+  } else {
+    buttonText = 'Начать тренировку';
+    buttonAction = handleStartOrContinue;
+  }
+
   const imageName = course.nameEN.toLowerCase().replace(' ', '');
   const imagePath = `/img/${imageName}.png`;
+  const OnMyProfileCoursesPage = pathname === '/users/me/courses';
 
   return (
     <div className={styles.center__courses}>
@@ -62,18 +144,42 @@ export default function CourseCard({ course }: CourseTypeProp) {
         </div>
 
         {user ? (
-          <button onClick={toggleAddRemove} className={styles.course__Image}>
-            <svg className={styles.course__add__svg}>
-              <use
-                xlinkHref={`/icon/${isCourseInMyCourses ? 'Remove.svg' : 'Add-in-Circle.svg'}`}
-              ></use>
-            </svg>
-          </button>
+          !isCourseInMyCourses ? (
+            <button onClick={toggleAddRemove} className={styles.course__Image}>
+              <div className={styles.course__add__svg}>
+                <Image
+                  src="/icon/Add-in-Circle.svg"
+                  alt="add"
+                  loading="eager"
+                  height={32}
+                  width={32}
+                />
+              </div>
+            </button>
+          ) : (
+            <button onClick={toggleAddRemove} className={styles.course__Image}>
+              <div className={styles.course__add__svg}>
+                <Image
+                  src="/icon/Remove.svg"
+                  alt="remove"
+                  loading="eager"
+                  height={32}
+                  width={32}
+                />
+              </div>
+            </button>
+          )
         ) : (
           <button onClick={openLogin} className={styles.course__Image}>
-            <svg className={styles.course__add__svg}>
-              <use xlinkHref="/icon/Add-in-Circle.svg"></use>
-            </svg>
+            <div className={styles.course__add__svg}>
+              <Image
+                src="/icon/Add-in-Circle.svg"
+                alt="add"
+                loading="eager"
+                height={32}
+                width={32}
+              />
+            </div>
           </button>
         )}
         <div className={styles.course__block}>
@@ -82,17 +188,25 @@ export default function CourseCard({ course }: CourseTypeProp) {
             <div className={styles.course__blockAbout}>
               <div className={styles.course__about}>
                 <div className={styles.course__Image}>
-                  <svg className={styles.course__svg}>
-                    <use xlinkHref="/icon/Calendar.svg"></use>
-                  </svg>
+                  <Image
+                    src="/icon/Calendar.svg"
+                    alt="Calendar"
+                    loading="eager"
+                    height={18}
+                    width={18}
+                  />
                 </div>
                 <p>{course.durationInDays} дней</p>
               </div>
               <div className={styles.course__about}>
                 <div className={styles.course__Image}>
-                  <svg className={styles.course__svg}>
-                    <use xlinkHref="/icon/Time.svg"></use>
-                  </svg>
+                  <Image
+                    src="/icon/Time.svg"
+                    alt="time"
+                    loading="eager"
+                    height={18}
+                    width={18}
+                  />
                 </div>
                 <p>
                   {course.dailyDurationInMinutes.from} -{' '}
@@ -102,32 +216,43 @@ export default function CourseCard({ course }: CourseTypeProp) {
             </div>
             <div className={styles.course__about}>
               <div className={styles.course__Image}>
-                <svg className={styles.course__svg}>
-                  <use xlinkHref="/icon/mingcute_signal-fill.svg"></use>
-                </svg>
+                <Image
+                  src="/icon/mingcute_signal-fill.svg"
+                  alt="mingcute"
+                  loading="eager"
+                  height={18}
+                  width={18}
+                />
               </div>
               <p>Сложность</p>
             </div>
           </div>
-          {isCourseInMyCourses && (
+          {isCourseInMyCourses && OnMyProfileCoursesPage && (
             <div>
               <div>
-                <p className={styles.course__progressText}>
-                  Прогресс{currentProgress}%
-                </p>
-                <div className={styles.course__progress}></div>
+                {Array.isArray(currentProgress) &&
+                currentProgress.length > 0 ? (
+                  <p className={styles.course__progressText}>
+                    Прогресс:
+                    {finalPercentage}%
+                  </p>
+                ) : (
+                  <p className={styles.course__progressText}>Прогресс: 0%</p>
+                )}
+
+                <div
+                  className={styles.course__progress}
+                  style={{ width: `${finalPercentage}%` }}
+                ></div>
               </div>
               <BaseButton
                 disabled={isLoading}
-                onClick={onWorkOut}
+                onClick={buttonAction}
                 fullWidth={true}
-                text={
-                  currentProgress.length ? 'Продолжить' : 'Начать тренировку'
-                }
+                text={buttonText}
               />
             </div>
           )}
-
           {isModalOpen ? (
             <ModalWorkOut
               key={courseId}

@@ -45,7 +45,7 @@ export default function ModalRegister() {
   const onSubmit = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
 
-    if (!email.trim || !password.trim) {
+    if (!email.trim() || !password.trim()) {
       return setErrorMessage('Заполните все поля');
     }
 
@@ -63,6 +63,10 @@ export default function ModalRegister() {
       })
       .then((res) => {
         dispatch(setToken(res.token));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('user', email);
+          localStorage.setItem('token', res.token);
+        }
         closeRegister();
         router.push('/');
       })
