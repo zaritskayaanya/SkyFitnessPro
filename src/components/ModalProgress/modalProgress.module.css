@@ -5,14 +5,9 @@
 }
 
 .containerEnter {
-  max-width: 100%;
-  height: 100vh;
   margin: 0 auto;
   position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  inset: 0;
   z-index: 4;
   background-color: rgba(0, 0, 0, 0.05);
 }
@@ -27,6 +22,7 @@
 
 .modal__form {
   width: 426px;
+  box-sizing: border-box;
   background-color: #ffffff;
   border-radius: 30px;
   display: -webkit-box;
@@ -74,10 +70,9 @@
   height: max-content;
   max-height: 600px;
   overflow-y: auto;
-  max-width: 460px;
 
   &::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
   }
 
   &::-webkit-scrollbar-track {
@@ -91,10 +86,12 @@
 
 .modal__input {
   width: 100%;
+  box-sizing: border-box;
   border: 1px solid #d0cece;
   border-radius: 8px;
   padding: 16px 18px;
   margin-top: 10px;
+  font-size: 18px;
 }
 
 .modal__input:-ms-input-placeholder {
@@ -126,7 +123,7 @@
 
 .modal__label {
   font-weight: 400;
-  font-size: 16px;
+  font-size: 18px;
   margin-bottom: 10px;
 }
 

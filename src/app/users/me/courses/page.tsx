@@ -4,19 +4,23 @@ import styles from './me.module.css';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/store';
 import { logout } from '../../../../store/features/authSlice';
-import Header from '../../../../components/Header/Header';
 import Image from 'next/image';
 import CoursesBlock from '../../../../components/CoursesBlock/CoursesBlock';
 import { useRouter } from 'next/navigation';
-import { getCoursesMe } from '../../../../services/course/courseApi';
+import { getCoursesMe, getProgressCourse } from '../../../../servises/course/courseApi';
 import { useEffect} from 'react';
 import {
+  setCompleted,
+  setCurrentProgressCourse,
   setFetchError,
   setFetchIsLoading,
   setMyCourseIds,
   setMyCourses,
-} from '../../../../store/features/courseSlice';
+} from '../../../../store/features/courseSlise';
 import { AxiosError } from 'axios';
+import { ProgressWorkOutCourseTypes } from '../../../../sharedTyres/shared.Types';
+import { useCourseProgress } from '../../../../hooks/useCourseProgres';
+
 
 export default function MeCourses() {
   const user = useAppSelector((state) => state.auth.user);
@@ -37,7 +41,7 @@ export default function MeCourses() {
       return;
     }
 
-    if (!myCourses.length && !fetchIsLoading) {
+    if (myCourseIds.length === 0 && !fetchIsLoading && !fetchError) {
       dispatch(setFetchIsLoading(true));
       getCoursesMe(token)
         .then((res) => {
@@ -48,12 +52,12 @@ export default function MeCourses() {
         .catch((err) => {
           if (err instanceof AxiosError) {
             if (err.response) {
-              setFetchError(err.response.data.message);
+              dispatch(setFetchError(err.response.data.message));
             } else if (err.request) {
-              setFetchError('Что-то с интернетом');
+              dispatch(setFetchError('Что-то с интернетом'));
             } else {
               console.log('error:', err);
-              setFetchError('Неизвестная ошибка');
+              dispatch(setFetchError('Неизвестная ошибка'));
             }
           }
         })
@@ -61,7 +65,7 @@ export default function MeCourses() {
           dispatch(setFetchIsLoading(false));
         });
     }
-  }, [dispatch, token, myCourses.length, fetchIsLoading]);
+  }, [dispatch, token, myCourseIds.length, fetchIsLoading, fetchError]);
 
   useEffect(() => {
     if (myCourseIds.length > 0 && allCourses.length > 0) {
@@ -73,6 +77,8 @@ export default function MeCourses() {
     }
   }, [myCourseIds, allCourses, dispatch]);
 
+  
+
   if (fetchIsLoading) {
     return (
       <div style={{ color: 'white', padding: '20px' }}>Загрузка данных ...</div>
@@ -81,7 +87,6 @@ export default function MeCourses() {
 
   return (
     <>
-      <Header />
       <div className={styles.center__container}>
         <h1 className={styles.course__descTitle}>Профиль</h1>
         <div className={styles.userContainer}>

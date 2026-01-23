@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { CourseTypes } from '../sharedTypes/shared.Types';
+import { CourseTypes } from '../sharedTyres/shared.Types';
 import { useAppDispatch, useAppSelector } from '../store/store';
-import { addCourse, removeCourse } from '../store/features/courseSlice';
+import { addCourse, removeCourse } from '../store/features/courseSlise';
 import { AxiosError } from 'axios';
-import { addCourseAPI, removeCourseAPI } from '../services/course/courseApi';
+import { addCourseAPI, removeCourseAPI } from '../servises/course/courseApi';
 import { useModal } from '../context/ModalContext';
 
 type returnTypeHook = {

@@ -12,6 +12,9 @@ export interface CourseTypes {
     to: number;
   };
   workouts: string[];
+  courseProgress: {
+    [courseId: string]: ProgressWorkOutCourseTypes;
+  };
 }
 
 export interface WorkOutTypes {
@@ -45,7 +48,6 @@ export interface UserTypes {
   user: {
     _id: string;
     email: string;
-    password: string;
     selectedCourses: string[];
     courseProgress: string[];
   };

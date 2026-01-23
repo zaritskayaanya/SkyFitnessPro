@@ -1,6 +1,5 @@
 .button {
   padding: 16px 26px;
-  display: block;
   border-radius: 46px;
   background: #bcec30;
   border: none;
@@ -30,7 +29,6 @@
 
 .fullWidth {
   width: 100%;
-  display: block;
   padding: 16px 26px;
   border-radius: 46px;
   background: #bcec30;

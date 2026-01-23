@@ -8,18 +8,18 @@ import {
   setCompletedWorkout,
   setCurrentProgress,
   setWorkoutData,
-} from '../../../../../../store/features/courseSlice';
+} from '../../../../../../store/features/courseSlise';
 import {
   getProgressTrain,
   getWorkOutId,
-} from '../../../../../../services/course/courseApi';
+} from '../../../../../../servises/course/courseApi';
 import Header from '../../../../../../components/Header/Header';
 import BaseButton from '../../../../../../components/Button/Button';
 import ModalProgress from '../../../../../../components/ModalProgress/ModalProgress';
 import {
   ProgressWorkOutTypes,
   WorkOutTypes,
-} from '../../../../../../sharedTypes/shared.Types';
+} from '../../../../../../sharedTyres/shared.Types';
 import { useEffect, useState } from 'react';
 
 export default function WorkoutPage() {
@@ -70,7 +70,7 @@ export default function WorkoutPage() {
         );
         const currentProgress = progressList.progressData;
 
-        if (currentProgress?.length) {
+        if (currentProgress && currentProgress.length) {
           dispatch(setCurrentProgress(currentProgress));
         }
         if (progressList.workoutCompleted === true) {
@@ -118,7 +118,6 @@ export default function WorkoutPage() {
 
   return (
     <div className={styles.workoutContainer}>
-      <Header />
       <h1 className={styles.workoutTitle}>{courseName}</h1>
       {videoUrl ? (
         <iframe
@@ -152,23 +151,25 @@ export default function WorkoutPage() {
             );
           })}
         </ul>
-
-        <BaseButton
+<div>    <BaseButton
           disabled={isLoading}
           onClick={() => setIsModalOpen(true)}
           fullWidth={false}
-          text={
-            currentProgress.length
-              ? 'Обновить свой прогресс'
-              : 'Заполнить свой прогресс'
-          }
-        />
+          text = 'Заполнить свой прогресс'
+          // text={
+          //   currentProgress.length>0
+          //     ? 'Обновить свой прогресс'
+          //     : 'Заполнить свой прогресс'
+          // }
+        /></div>
+    
         {isModalOpen && (
           <ModalProgress
             key={workoutID}
             courseId={courseId}
             workoutId={workoutID}
-            initialProgress={currentProgress}
+            exercises={workoutData.exercises}
+            initialProgress={currentProgress || []}
             onClose={() => setIsModalOpen(false)}
           />
         )}
@@ -176,3 +177,28 @@ export default function WorkoutPage() {
     </div>
   );
 }
+{/* <ul className={styles.exercisesBlockUl}>
+        {workoutData.exercises.map((exercise, index) => {
+            
+            // 1. Безопасный доступ к прогрессу: 
+            // Если currentProgress пуст, берем 0, иначе берем значение по индексу
+            const currentAmount = currentProgress[index] ?? 0; 
+            
+            const percent = calcPercent(
+                currentAmount, // Передаем гарантированное число (0, если нет данных)
+                exercise.quantity,
+            );
+            
+            return (
+                <li className={styles.exercisesBlockList} key={exercise._id}>
+                    {exercise.name} (
+                    {(currentAmount / exercise.quantity) * 100 || 0} %) 
+                    {/* Тут тоже используем currentAmount, а не currentProgress[index] */}
+    //                 <div
+    //                     className={styles.course__done}
+    //                     style={{ width: `${percent}%` }}
+    //                 ></div>
+    //             </li>
+    //         );
+    //     })}
+    // </ul> */}

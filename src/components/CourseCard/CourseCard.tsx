@@ -8,7 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   CourseTypes,
   ProgressWorkOutCourseTypes,
-} from '../../sharedTypes/shared.Types';
+} from '../../sharedTyres/shared.Types';
 import BaseButton from '../Button/Button';
 import { useCourse } from '../../hooks/useCourse';
 import { useModal } from '../../context/ModalContext';
@@ -18,13 +18,13 @@ import {
   setCompleted,
   setCurrentCourse,
   setCurrentProgressCourse,
-} from '../../store/features/courseSlice';
+} from '../../store/features/courseSlise';
 import {
   deleteAllCourseProgress,
   getProgressCourse,
-} from '../../services/course/courseApi';
+} from '../../servises/course/courseApi';
 import { AxiosError } from 'axios';
-import { useCourseProgress } from '../../hooks/useCourseProgress';
+import { useCourseProgress } from '../../hooks/useCourseProgres';
 
 interface CourseTypeProp {
   course: CourseTypes;
@@ -49,34 +49,42 @@ export default function CourseCard({ course }: CourseTypeProp) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!courseId || !token) {
-      return;
-    }
+  if (!courseId || !token) {
+    return;
+  }
 
-    getProgressCourse(courseId, token)
-      .then((res: ProgressWorkOutCourseTypes[]) => {
-        setCurrentProgressCourse(res);
-        if (res.length > 0) {
-          const completionStatus = res[0].courseCompleted;
-          setCompleted(completionStatus);
+  getProgressCourse(courseId, token)
+    .then((res: ProgressWorkOutCourseTypes) => {
+      // Формируем корректный payload для экшена
+      const payload = {
+        courseId: courseId,           // добавляем ID курса
+        progress: res,                // прогресс курса
+      };
+
+      dispatch(setCurrentProgressCourse(payload)); // передаём объект нужного типа
+
+      if (res) {
+        const completionStatus = res.courseCompleted;
+        dispatch(setCompleted(completionStatus));
+      }
+    })
+    .catch((error) => {
+      if (error instanceof AxiosError) {
+        if (error.response) {
+          console.log(error.response.data);
+          setErrorMessage(error.response.data.message);
+        } else if (error.request) {
+          setErrorMessage('Что-то с интернетом');
+        } else {
+          setErrorMessage('Неизвестная ошибка');
         }
-      })
-      .catch((error) => {
-        if (error instanceof AxiosError) {
-          if (error.response) {
-            console.log(error.response.data);
-            setErrorMessage(error.response.data.message);
-          } else if (error.request) {
-            setErrorMessage('Что-то с интернетом');
-          } else {
-            setErrorMessage('Неизвестная ошибка');
-          }
-        }
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+      }
+    })
+    .finally(() => {
+      setIsLoading(false);
+    });
   }, [courseId, token]);
+
 
   const finalPercentage = useCourseProgress();
 

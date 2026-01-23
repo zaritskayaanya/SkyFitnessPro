@@ -6,7 +6,7 @@ import {
   ProgressWorkOutTypes,
   UserTypes,
   WorkOutTypes,
-} from '../../sharedTypes/shared.Types';
+} from '../../sharedTyres/shared.Types';
 
 interface authUserForm {
   email: string;
@@ -104,7 +104,7 @@ export const removeCourseProgress = (token: string, courseId: string) => {
 export const getProgressCourse = async (
   courseId: string,
   token: string,
-): Promise<ProgressWorkOutCourseTypes[]> => {
+): Promise<ProgressWorkOutCourseTypes> => {
   const res = await axios.get(
     BASE_URL + `/api/fitness/users/me/progress?courseId=${courseId}`,
     {

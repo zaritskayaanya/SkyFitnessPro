@@ -4,11 +4,11 @@ import styles from './modalWorkOut.module.css';
 import { useEffect, useState } from 'react';
 import { AxiosError } from 'axios';
 import { useAppDispatch, useAppSelector } from '../../store/store';
-import { getWorkOutList } from '../../services/course/courseApi';
+import { getWorkOutList } from '../../servises/course/courseApi';
 import BaseButton from '../Button/Button';
-import { WorkOutTypes } from '../../sharedTypes/shared.Types';
+import { WorkOutTypes } from '../../sharedTyres/shared.Types';
 import { useRouter } from 'next/navigation';
-import { setWorkouts } from '../../store/features/courseSlice';
+import { setWorkouts } from '../../store/features/courseSlise';
 
 export interface ModalWorkOutProps {
   courseId: string;

@@ -2,8 +2,9 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
   CourseTypes,
   ProgressWorkOutCourseTypes,
+  ProgressWorkOutTypes,
   WorkOutTypes,
-} from '../../sharedTypes/shared.Types';
+} from '../../sharedTyres/shared.Types';
 
 type initialStateType = {
   currentCourse: CourseTypes | null;
@@ -17,12 +18,14 @@ type initialStateType = {
   addedCourseId: string | null;
   myCourseIds: string[];
   currentProgress: number[]; // по тренировке
-  currentProgressCourse: ProgressWorkOutCourseTypes[]; //  по курсу
   totalWorkoutProgress: number | null; // по тренировке
   workouts: WorkOutTypes[]; // все по курсу
   workoutData: WorkOutTypes | null; // по тренировке
   completedStatus: boolean;
   completedWorkout: string[];
+  courseProgress: {
+    [courseId: string]: ProgressWorkOutCourseTypes; // прогресс по курсу
+  };
 };
 
 const initialState: initialStateType = {
@@ -37,12 +40,12 @@ const initialState: initialStateType = {
   addedCourseId: null,
   myCourseIds: [],
   currentProgress: [],
-  currentProgressCourse: [],
   totalWorkoutProgress: null,
   workouts: [],
   workoutData: null,
   completedStatus: false,
   completedWorkout: [],
+  courseProgress: {},
 };
 
 const courseSlice = createSlice({
@@ -73,11 +76,13 @@ const courseSlice = createSlice({
       state.totalWorkoutProgress = action.payload;
     },
 
+    // Исправленный редуксер: сохраняем прогресс курса в courseProgress
     setCurrentProgressCourse: (
       state,
-      action: PayloadAction<ProgressWorkOutCourseTypes[]>,
+      action: PayloadAction<{ courseId: string; progress: ProgressWorkOutCourseTypes }>
     ) => {
-      state.currentProgressCourse = action.payload;
+      const { courseId, progress } = action.payload;
+      state.courseProgress[courseId] = progress;
     },
 
     setWorkouts: (state, action: PayloadAction<WorkOutTypes[]>) => {
@@ -104,14 +109,12 @@ const courseSlice = createSlice({
       state.myCourses = state.myCourses.filter(
         (course) => course._id !== action.payload._id,
       );
-
       state.isCourseAdded = false;
       state.addedCourseId = null;
     },
 
     resetCourseAdditionStatus: (state) => {
       state.currentProgress = [];
-      state.currentProgressCourse = [];
       state.totalWorkoutProgress = null;
       state.completedStatus = false;
       state.completedWorkout = [];
@@ -145,4 +148,6 @@ export const {
   setCompleted,
   resetCourseAdditionStatus,
 } = courseSlice.actions;
+
+
 export const courseSliceReducer = courseSlice.reducer;

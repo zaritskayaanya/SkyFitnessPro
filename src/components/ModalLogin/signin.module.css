@@ -2,11 +2,6 @@
   width: 100%;
   min-height: 100%;
   background-color: transparent;
-  /* position: fixed; 
-    z-index: 0; 
-    display: flex;
-    justify-content: center; 
-    align-items: center;     */
 }
 
 .containerEnter {
@@ -14,10 +9,7 @@
   height: 100vh;
   margin: 0 auto;
   position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  inset: 0;
   z-index: 4;
   background-color: rgba(0, 0, 0, 0.05);
 }

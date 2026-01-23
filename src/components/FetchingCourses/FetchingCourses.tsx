@@ -7,8 +7,8 @@ import {
   setAllCourses,
   setFetchError,
   setFetchIsLoading,
-} from '../../store/features/courseSlice';
-import { getCourses } from '../../services/course/courseApi';
+} from '../../store/features/courseSlise';
+import { getCourses } from '../../servises/course/courseApi';
 
 export default function FetchingCourses() {
   const dispatch = useAppDispatch();

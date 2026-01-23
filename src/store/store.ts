@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
 import { useStore } from 'react-redux';
 import { authSliceReducer } from './features/authSlice';
-import { courseSliceReducer } from './features/courseSlice';
+import { courseSliceReducer } from './features/courseSlise';
 import { loadAuthState } from './features/authSrorage';
 
 export const makeStore = () => {

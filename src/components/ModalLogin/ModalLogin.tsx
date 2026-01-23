@@ -8,9 +8,9 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { AxiosError } from 'axios';
 import { useRouter } from 'next/navigation';
-import { authUser } from '../../services/auth/authApi';
+import { authUser } from '../../servises/auth/authApi';
 import { setToken, setUser } from '../../store/features/authSlice';
-import { getToken } from '../../services/course/courseApi';
+import { getToken } from '../../servises/course/courseApi';
 import BaseButton from '../Button/Button';
 import { useAppDispatch } from '../../store/store';
 
