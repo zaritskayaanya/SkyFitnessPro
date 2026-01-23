@@ -5,17 +5,14 @@ import { useAppSelector } from '../store/store';
 import type { WorkOutTypes, ProgressWorkOutCourseTypes } from '../sharedTyres/shared.Types';
 
 export const useCourseProgress = (): number => {
-  // 1. Получаем данные из состояния
   const courseProgress = useAppSelector((state) => state.course.courseProgress);
   const workouts = useAppSelector((state) => state.course.workouts);
   const completedStatus = useAppSelector((state) => state.course.completedStatus);
 
-  // 2. Если курс завершён — сразу 100%
   if (completedStatus) {
     return 100;
   }
 
-  // 3. Расчёт общей цели (сколько нужно выполнить)
   const totalPotentialValue = useMemo((): number => {
     if (!workouts || workouts.length === 0) {
       return 0;
@@ -32,14 +29,12 @@ export const useCourseProgress = (): number => {
 
       return total + workoutGoalSum;
     }, 0);
-  }, [workouts]); // Зависимость: только workouts
+  }, [workouts]); 
 
-  // 4. Расчёт выполненного объёма
   const totalCompletedValue = useMemo((): number => {
     let completed = 0;
 
     Object.values(courseProgress).forEach((progress: ProgressWorkOutCourseTypes) => {
-      // Проверяем, что workoutsProgress существует и не пуст
       if (!progress.workoutsProgress || !Array.isArray(progress.workoutsProgress)) {
         return;
       }
@@ -57,11 +52,10 @@ export const useCourseProgress = (): number => {
     });
 
     return completed;
-  }, [courseProgress]); // Зависимость: только courseProgress
+  }, [courseProgress]); 
 
-  // 5. Финальный расчёт процента
   const percentage = useMemo((): number => {
-    if (totalPotentialValue <= 0) { // Учитываем отрицательные значения
+    if (totalPotentialValue <= 0) { 
       return 0;
     }
 

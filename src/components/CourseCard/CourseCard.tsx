@@ -55,13 +55,12 @@ export default function CourseCard({ course }: CourseTypeProp) {
 
   getProgressCourse(courseId, token)
     .then((res: ProgressWorkOutCourseTypes) => {
-      // Формируем корректный payload для экшена
       const payload = {
-        courseId: courseId,           // добавляем ID курса
-        progress: res,                // прогресс курса
+        courseId: courseId,           
+        progress: res,               
       };
 
-      dispatch(setCurrentProgressCourse(payload)); // передаём объект нужного типа
+      dispatch(setCurrentProgressCourse(payload)); 
 
       if (res) {
         const completionStatus = res.courseCompleted;

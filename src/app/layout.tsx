@@ -27,7 +27,7 @@ export default function RootLayout({
       <body className={`${roboto.variable}  antialiased`}>
         <ReduxProvider>
           <ModalProvider>
-            <Header /> {/* 💡 Header теперь один на все страницы */}
+            <Header /> 
             <main>{children}</main>
             <ModalLogin />
             <ModalRegister/>
