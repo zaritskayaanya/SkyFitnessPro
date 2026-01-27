@@ -17,14 +17,15 @@ type initialStateType = {
   isCourseAdded: boolean;
   addedCourseId: string | null;
   myCourseIds: string[];
-  currentProgress: number[]; // по тренировке
+  currentProgress: number[] // по тренировке
+  currentProgressCourse: ProgressWorkOutCourseTypes[]; // по курсу (массив)
   totalWorkoutProgress: number | null; // по тренировке
   workouts: WorkOutTypes[]; // все по курсу
   workoutData: WorkOutTypes | null; // по тренировке
   completedStatus: boolean;
   completedWorkout: string[];
   courseProgress: {
-    [courseId: string]: ProgressWorkOutCourseTypes; // прогресс по курсу
+    [courseId: string]: ProgressWorkOutCourseTypes; // по курсу (объект)
   };
 };
 
@@ -40,6 +41,7 @@ const initialState: initialStateType = {
   addedCourseId: null,
   myCourseIds: [],
   currentProgress: [],
+  currentProgressCourse: [],
   totalWorkoutProgress: null,
   workouts: [],
   workoutData: null,
@@ -76,13 +78,53 @@ const courseSlice = createSlice({
       state.totalWorkoutProgress = action.payload;
     },
 
-    // Исправленный редуксер: сохраняем прогресс курса в courseProgress
+    // Для работы с массивом прогресса
     setCurrentProgressCourse: (
+      state,
+      action: PayloadAction<ProgressWorkOutCourseTypes[]>,
+    ) => {
+      state.currentProgressCourse = action.payload;
+    },
+
+    // Для работы с объектом прогресса (по courseId)
+    setCourseProgress: (
       state,
       action: PayloadAction<{ courseId: string; progress: ProgressWorkOutCourseTypes }>
     ) => {
       const { courseId, progress } = action.payload;
       state.courseProgress[courseId] = progress;
+    },
+
+    // Для обновления прогресса тренировки внутри курса
+    updateWorkoutProgress: (
+      state,
+      action: PayloadAction<{ 
+        courseId: string; 
+        workoutId: string; 
+        progressData: number[];
+        workoutCompleted: boolean;
+      }>
+    ) => {
+      const { courseId, workoutId, progressData, workoutCompleted } = action.payload;
+      
+      if (state.courseProgress[courseId]) {
+        const workoutIndex = state.courseProgress[courseId].workoutsProgress
+          .findIndex(w => w.workoutId === workoutId);
+        
+        if (workoutIndex !== -1) {
+          state.courseProgress[courseId].workoutsProgress[workoutIndex] = {
+            workoutId,
+            workoutCompleted,
+            progressData,
+          };
+        } else {
+          state.courseProgress[courseId].workoutsProgress.push({
+            workoutId,
+            workoutCompleted,
+            progressData,
+          });
+        }
+      }
     },
 
     setWorkouts: (state, action: PayloadAction<WorkOutTypes[]>) => {
@@ -109,12 +151,14 @@ const courseSlice = createSlice({
       state.myCourses = state.myCourses.filter(
         (course) => course._id !== action.payload._id,
       );
+
       state.isCourseAdded = false;
       state.addedCourseId = null;
     },
 
     resetCourseAdditionStatus: (state) => {
       state.currentProgress = [];
+      state.currentProgressCourse = [];
       state.totalWorkoutProgress = null;
       state.completedStatus = false;
       state.completedWorkout = [];
@@ -145,9 +189,9 @@ export const {
   setWorkoutData,
   setTotalWorkoutProgress,
   setCurrentProgressCourse,
+  setCourseProgress,
+  updateWorkoutProgress,
   setCompleted,
   resetCourseAdditionStatus,
 } = courseSlice.actions;
-
-
 export const courseSliceReducer = courseSlice.reducer;

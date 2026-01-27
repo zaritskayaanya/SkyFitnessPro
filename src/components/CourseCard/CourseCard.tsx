@@ -49,41 +49,34 @@ export default function CourseCard({ course }: CourseTypeProp) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-  if (!courseId || !token) {
-    return;
-  }
+    if (!courseId || !token) {
+      return;
+    }
 
-  getProgressCourse(courseId, token)
-    .then((res: ProgressWorkOutCourseTypes) => {
-      const payload = {
-        courseId: courseId,           
-        progress: res,               
-      };
-
-      dispatch(setCurrentProgressCourse(payload)); 
-
-      if (res) {
-        const completionStatus = res.courseCompleted;
-        dispatch(setCompleted(completionStatus));
-      }
-    })
-    .catch((error) => {
-      if (error instanceof AxiosError) {
-        if (error.response) {
-          console.log(error.response.data);
-          setErrorMessage(error.response.data.message);
-        } else if (error.request) {
-          setErrorMessage('Что-то с интернетом');
-        } else {
-          setErrorMessage('Неизвестная ошибка');
+    getProgressCourse(courseId, token)
+      .then((res: ProgressWorkOutCourseTypes) => {
+        setCurrentProgressCourse(res);
+        if (res) {
+          const completionStatus = res.courseCompleted;
+          setCompleted(completionStatus);
         }
-      }
-    })
-    .finally(() => {
-      setIsLoading(false);
-    });
+      })
+      .catch((error) => {
+        if (error instanceof AxiosError) {
+          if (error.response) {
+            console.log(error.response.data);
+            setErrorMessage(error.response.data.message);
+          } else if (error.request) {
+            setErrorMessage('Что-то с интернетом');
+          } else {
+            setErrorMessage('Неизвестная ошибка');
+          }
+        }
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, [courseId, token]);
-
 
   const finalPercentage = useCourseProgress();
 

@@ -39,7 +39,6 @@ export const useMyCoursesDataAndProgress = () => {
       });
   }, [dispatch, token, myCourseIds.length, fetchIsLoading]);
 
-
   useEffect(() => {
     if (myCourseIds.length > 0 && allCourses.length > 0) {
       const filteredCourses = allCourses.filter((course) =>
@@ -48,7 +47,6 @@ export const useMyCoursesDataAndProgress = () => {
       dispatch(setMyCourses(filteredCourses));
     }
   }, [myCourseIds, allCourses, dispatch]);
-
 
   useEffect(() => {
     if (myCourseIds.length === 0 || !token) {
@@ -60,7 +58,6 @@ export const useMyCoursesDataAndProgress = () => {
         getProgressCourse(courseId, token)
           .then((res: ProgressWorkOutCourseTypes) => {
             const formattedProgress: ProgressWorkOutCourseTypes = {
-              courseId,
               courseCompleted: res.courseCompleted,
               workoutsProgress: res.workoutsProgress,
             };
@@ -85,9 +82,9 @@ export const useMyCoursesDataAndProgress = () => {
   const coursesWithProgress = useAppSelector((state) => {
     return state.course.myCourses.map((course) => ({
       ...course,
-      progress: courseProgress[course._id] || {
+      progress: courseProgress[coursId] || {
         courseCompleted: false,
-        workoutsProgress: [],
+        workouts: {},
       },
     }));
   });

@@ -28,6 +28,18 @@ export default function ModalWorkOut({ courseId, onClose }: ModalWorkOutProps) {
     (state) => state.course,
   );
 
+  // Сортируем тренировки по порядку
+  const sortedWorkouts = [...workouts].sort((a, b) => {
+    // Извлекаем номер урока из названия
+    // Пример названий: "Урок 1. Основы", "Урок 2. Основные движения"
+    const getLessonNumber = (name: string): number => {
+      const match = name.match(/Урок\s+(\d+)/);
+      return match ? parseInt(match[1], 10) : 0;
+    };
+    
+    return getLessonNumber(a.name) - getLessonNumber(b.name);
+  });
+
   useEffect(() => {
     if (!courseId || !token) {
       return;
@@ -35,9 +47,18 @@ export default function ModalWorkOut({ courseId, onClose }: ModalWorkOutProps) {
 
     getWorkOutList(courseId, token)
       .then((res: WorkOutTypes[]) => {
-        dispatch(setWorkouts(res));
-        if (res.length > 0) {
-          setSelectedWorkoutId(res[0]._id);
+        // Сортируем тренировки перед сохранением в store
+        const sortedRes = [...res].sort((a, b) => {
+          const getLessonNumber = (name: string): number => {
+            const match = name.match(/Урок\s+(\d+)/);
+            return match ? parseInt(match[1], 10) : 0;
+          };
+          return getLessonNumber(a.name) - getLessonNumber(b.name);
+        });
+        
+        dispatch(setWorkouts(sortedRes));
+        if (sortedRes.length > 0) {
+          setSelectedWorkoutId(sortedRes[0]._id);
         }
       })
       .catch((error) => {
@@ -85,10 +106,10 @@ export default function ModalWorkOut({ courseId, onClose }: ModalWorkOutProps) {
             <div className={styles.inputContainer}>
               {isLoading ? (
                 <span style={{ color: 'white' }}>Загрузка тренировок...</span>
-              ) : workouts.length === 0 ? (
+              ) : sortedWorkouts.length === 0 ? (
                 <p>Тренировок нет.</p>
               ) : (
-                workouts.map((workout) => {
+                sortedWorkouts.map((workout) => {
                   const isSelected = selectedWorkoutId === workout._id;
                   const isCompleted = completedWorkout.includes(workout._id);
 

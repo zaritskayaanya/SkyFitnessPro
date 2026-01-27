@@ -68,6 +68,7 @@ export const removeCourseAPI = (token: string, courseId: string) => {
   });
 };
 
+//Получить список тренировок курса.
 export const getWorkOutId = async (
   workoutId: string,
   token: string,
@@ -78,6 +79,7 @@ export const getWorkOutId = async (
   return res.data;
 };
 
+//Получить данные по тренировке
 export const getWorkOutList = async (
   courseId: string,
   token: string,
@@ -91,12 +93,14 @@ export const getWorkOutList = async (
   return res.data;
 };
 
+//Удалить весь прогресс по курсу.
 export const removeCourseProgress = (token: string, courseId: string) => {
   return axios.patch(BASE_URL + `/api/fitness/courses/${courseId}/reset`, {
     headers: { 'Content-Type': '', Authorization: `Bearer ${token}` },
   });
 };
 
+//Получить прогресс пользователя по всему курсу.
 export const getProgressCourse = async (
   courseId: string,
   token: string,
@@ -110,6 +114,7 @@ export const getProgressCourse = async (
   return res.data;
 };
 
+//Получить прогресс пользователя по тренировке.
 export const getProgressTrain = async (
   courseId: string,
   workoutId: string,
@@ -125,6 +130,7 @@ export const getProgressTrain = async (
   return res.data;
 };
 
+//Сохранить прогресс тренировки.
 export const saveTrainProgress = (
   courseId: string,
   workoutId: string,
@@ -140,6 +146,7 @@ export const saveTrainProgress = (
   );
 };
 
+//Удалить весь прогресс по курсу.
 export const deleteAllCourseProgress = (
   courseId: string,
   token: string,
