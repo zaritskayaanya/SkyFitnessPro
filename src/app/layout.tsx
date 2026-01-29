@@ -6,6 +6,7 @@ import { ModalProvider } from '../context/ModalContext';
 import ModalLogin from '../components/ModalLogin/ModalLogin';
 import ModalRegister from '../components/ModalRegister/ModalRegister';
 import Header from '../components/Header/Header';
+import FetchingCourses from '../components/FetchingCourses/FetchingCourses';
 
 const roboto = Roboto({
   variable: '--font-roboto',

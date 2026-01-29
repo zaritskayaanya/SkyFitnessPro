@@ -47,6 +47,7 @@ export default function CenterBlock() {
           disabled={fetchIsLoading}
           onClick={handleScrollToTop}
           text="Наверх ↑"
+          fullWidth={false}
         />
       </div>
     </div>

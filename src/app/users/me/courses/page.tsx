@@ -19,7 +19,7 @@ import {
 } from '../../../../store/features/courseSlise';
 import { AxiosError } from 'axios';
 import { ProgressWorkOutCourseTypes } from '../../../../sharedTyres/shared.Types';
-import { useCourseProgress } from '../../../../hooks/useCourseProgres';
+import { useCourseProgress } from '../../../../hooks/useCourseProgress';
 
 
 export default function MeCourses() {

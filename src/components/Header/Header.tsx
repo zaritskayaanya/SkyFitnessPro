@@ -42,6 +42,7 @@ export default function Header() {
                 disabled={isLoading}
                 onClick={openLogin}
                 text="Войти"
+                fullWidth={false}
               />
             )}
             {user && (

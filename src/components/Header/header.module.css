@@ -88,3 +88,8 @@
     display: none;
   }
 }
+
+.buttonContainer {
+  flex-shrink: 0;
+  width: auto;
+}

@@ -17,14 +17,14 @@ import {
   resetCourseAdditionStatus,
   setCompleted,
   setCurrentCourse,
-  setCurrentProgressCourse,
+  setCourseProgress,
 } from '../../store/features/courseSlise';
 import {
   deleteAllCourseProgress,
   getProgressCourse,
 } from '../../servises/course/courseApi';
 import { AxiosError } from 'axios';
-import { useCourseProgress } from '../../hooks/useCourseProgres';
+import { useCourseProgress } from '../../hooks/useCourseProgress';
 
 interface CourseTypeProp {
   course: CourseTypes;
@@ -55,10 +55,15 @@ export default function CourseCard({ course }: CourseTypeProp) {
 
     getProgressCourse(courseId, token)
       .then((res: ProgressWorkOutCourseTypes) => {
-        setCurrentProgressCourse(res);
+        // Используем setCourseProgress вместо setCurrentProgressCourse
+        dispatch(setCourseProgress({ 
+          courseId, 
+          progress: res 
+        }));
+        
         if (res) {
           const completionStatus = res.courseCompleted;
-          setCompleted(completionStatus);
+          dispatch(setCompleted(completionStatus));
         }
       })
       .catch((error) => {
@@ -76,7 +81,7 @@ export default function CourseCard({ course }: CourseTypeProp) {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [courseId, token]);
+  }, [courseId, token, dispatch]); // Добавлен dispatch в зависимости
 
   const finalPercentage = useCourseProgress();
 
@@ -91,12 +96,12 @@ export default function CourseCard({ course }: CourseTypeProp) {
       e.preventDefault();
       setIsLoading(true);
 
-      setCurrentCourse(course);
+      dispatch(setCurrentCourse(course)); // Добавлен dispatch
       setIsModalOpen(true);
 
       setIsLoading(false);
     },
-    [course, setIsModalOpen],
+    [course, dispatch], // Добавлен dispatch в зависимости
   );
 
   const handleReset = useCallback(

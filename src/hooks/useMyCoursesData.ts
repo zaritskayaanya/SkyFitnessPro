@@ -2,7 +2,7 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../store/store';
 import { useEffect } from 'react';
 import {
-  setCurrentProgressCourse,
+  setCourseProgress, 
   setFetchError,
   setFetchIsLoading,
   setMyCourseIds,
@@ -58,12 +58,13 @@ export const useMyCoursesDataAndProgress = () => {
         getProgressCourse(courseId, token)
           .then((res: ProgressWorkOutCourseTypes) => {
             const formattedProgress: ProgressWorkOutCourseTypes = {
+              courseId: courseId, 
               courseCompleted: res.courseCompleted,
               workoutsProgress: res.workoutsProgress,
             };
 
             dispatch(
-              setCurrentProgressCourse({
+              setCourseProgress({
                 courseId: courseId,
                 progress: formattedProgress,
               }),
@@ -82,9 +83,10 @@ export const useMyCoursesDataAndProgress = () => {
   const coursesWithProgress = useAppSelector((state) => {
     return state.course.myCourses.map((course) => ({
       ...course,
-      progress: courseProgress[coursId] || {
+      progress: courseProgress[course._id] || {
+        courseId: course._id,
         courseCompleted: false,
-        workouts: {},
+        workoutsProgress: [],
       },
     }));
   });
