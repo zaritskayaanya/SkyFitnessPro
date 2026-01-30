@@ -24,7 +24,7 @@ import {
   getProgressCourse,
 } from '../../servises/course/courseApi';
 import { AxiosError } from 'axios';
-import { useCourseProgress } from '../../hooks/useCourseProgress';
+import { useCourseProgress } from '../../hooks/useCourseProgres';
 
 interface CourseTypeProp {
   course: CourseTypes;
