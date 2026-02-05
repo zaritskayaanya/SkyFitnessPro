@@ -28,6 +28,15 @@ export default function ModalWorkOut({ courseId, onClose }: ModalWorkOutProps) {
     (state) => state.course,
   );
 
+  const sortedWorkouts = [...workouts].sort((a, b) => {
+    const getLessonNumber = (name: string): number => {
+      const match = name.match(/Урок\s+(\d+)/);
+      return match ? parseInt(match[1], 10) : 0;
+    };
+    
+    return getLessonNumber(a.name) - getLessonNumber(b.name);
+  });
+
   useEffect(() => {
     if (!courseId || !token) {
       return;
