@@ -12,10 +12,6 @@ interface authUserReturn {
   _id: number;
 }
 
-// interface TokenType {
-//   token: string;
-// }
-
 export const authUser = (data: authUserForm): Promise<authUserReturn> => {
   return axios.post(BASE_URL + '/api/fitness/auth/login/', data, {
     headers: { 'Content-Type': '' },

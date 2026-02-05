@@ -1,5 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { CourseTypes, WorkOutTypes } from '../../sharedTypes/shared.Types';
+import {
+  CourseTypes,
+  ProgressWorkOutCourseTypes,
+  ProgressWorkOutTypes,
+  WorkOutTypes,
+} from '../../sharedTyres/shared.Types';
 
 type initialStateType = {
   currentCourse: CourseTypes | null;
@@ -12,8 +17,15 @@ type initialStateType = {
   isCourseAdded: boolean;
   addedCourseId: string | null;
   myCourseIds: string[];
-  currentProgress: number[];
-  workouts: WorkOutTypes[];
+  currentProgress: number[]; // по тренировке
+  totalWorkoutProgress: number | null; // по тренировке
+  workouts: WorkOutTypes[]; // все по курсу
+  workoutData: WorkOutTypes | null; // по тренировке
+  completedStatus: boolean;
+  completedWorkout: string[];
+  courseProgress: {
+    [courseId: string]: ProgressWorkOutCourseTypes; // прогресс по курсу
+  };
 };
 
 const initialState: initialStateType = {
@@ -28,7 +40,12 @@ const initialState: initialStateType = {
   addedCourseId: null,
   myCourseIds: [],
   currentProgress: [],
+  totalWorkoutProgress: null,
   workouts: [],
+  workoutData: null,
+  completedStatus: false,
+  completedWorkout: [],
+  courseProgress: {},
 };
 
 const courseSlice = createSlice({
@@ -55,42 +72,53 @@ const courseSlice = createSlice({
       state.currentProgress = action.payload;
     },
 
+    setTotalWorkoutProgress: (state, action: PayloadAction<number>) => {
+      state.totalWorkoutProgress = action.payload;
+    },
+
+    // Исправленный редуксер: сохраняем прогресс курса в courseProgress
+    setCurrentProgressCourse: (
+      state,
+      action: PayloadAction<{ courseId: string; progress: ProgressWorkOutCourseTypes }>
+    ) => {
+      const { courseId, progress } = action.payload;
+      state.courseProgress[courseId] = progress;
+    },
+
     setWorkouts: (state, action: PayloadAction<WorkOutTypes[]>) => {
       state.workouts = action.payload;
+    },
+
+    setWorkoutData: (state, action: PayloadAction<WorkOutTypes | null>) => {
+      state.workoutData = action.payload;
+    },
+
+    setCompleted: (state, action: PayloadAction<boolean>) => {
+      state.completedStatus = action.payload;
+    },
+
+    setCompletedWorkout: (state, action: PayloadAction<string>) => {
+      state.completedWorkout = [...state.completedWorkout, action.payload];
     },
 
     addCourse: (state, action: PayloadAction<CourseTypes>) => {
       state.myCourses = [...state.myCourses, action.payload];
     },
 
-    // removeCourse: (state, action: PayloadAction<CourseTypes>) => {
-    //   state.myCourses = state.myCourses.filter(
-    //     (course) => course._id !== action.payload._id,
-    //   );
-    // },
-
-    // addCourse: (state, action: PayloadAction<CourseTypes>) => {
-    //   if (!state.myCourses.some(c => c._id === action.payload._id)) {
-    //     state.myCourses = [...state.myCourses, action.payload];
-    //   }
-    //   state.isCourseAdded = true;
-    //   state.addedCourseId = action.payload._id;
-
-    // },
-
     removeCourse: (state, action: PayloadAction<CourseTypes>) => {
       state.myCourses = state.myCourses.filter(
         (course) => course._id !== action.payload._id,
       );
-
       state.isCourseAdded = false;
       state.addedCourseId = null;
     },
 
-    // resetCourseAdditionStatus: (state) => {
-    //     state.isCourseAdded = false;
-    //     state.addedCourseId = null;
-    // },
+    resetCourseAdditionStatus: (state) => {
+      state.currentProgress = [];
+      state.totalWorkoutProgress = null;
+      state.completedStatus = false;
+      state.completedWorkout = [];
+    },
 
     setFetchError: (state, action: PayloadAction<string>) => {
       state.fetchError = action.payload;
@@ -113,5 +141,13 @@ export const {
   setMyCourseIds,
   setCurrentProgress,
   setWorkouts,
+  setCompletedWorkout,
+  setWorkoutData,
+  setTotalWorkoutProgress,
+  setCurrentProgressCourse,
+  setCompleted,
+  resetCourseAdditionStatus,
 } = courseSlice.actions;
+
+
 export const courseSliceReducer = courseSlice.reducer;

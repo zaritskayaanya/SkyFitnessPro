@@ -8,9 +8,9 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { AxiosError } from 'axios';
 import { useRouter } from 'next/navigation';
-import { authUser } from '../../services/auth/authApi';
+import { authUser } from '../../servises/auth/authApi';
 import { setToken, setUser } from '../../store/features/authSlice';
-import { getToken } from '../../services/course/courseApi';
+import { getToken } from '../../servises/course/courseApi';
 import BaseButton from '../Button/Button';
 import { useAppDispatch } from '../../store/store';
 
@@ -21,7 +21,7 @@ export default function ModalLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const [isLoading, seteIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   if (!isLoginOpen) return null;
 
@@ -36,10 +36,10 @@ export default function ModalLogin() {
   const onSubmit = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
 
-    if (!email.trim || !password.trim) {
+    if (!email.trim() || !password.trim()) {
       return setErrorMessage('Заполните все поля');
     }
-    seteIsLoading(true);
+    setIsLoading(true);
     setErrorMessage('');
 
     authUser({ email, password })
@@ -49,6 +49,11 @@ export default function ModalLogin() {
       })
       .then((res) => {
         dispatch(setToken(res.token));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('user', email);
+          localStorage.setItem('token', res.token);
+        }
+        closeLogin();
         router.push('/');
       })
       .catch((error) => {
@@ -64,8 +69,7 @@ export default function ModalLogin() {
         }
       })
       .finally(() => {
-        seteIsLoading(false);
-        closeLogin();
+        setIsLoading(false);
       });
   };
 

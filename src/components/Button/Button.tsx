@@ -1,8 +1,9 @@
+
 import styles from './button.module.css';
 
 type BaseButton = {
   text: string;
-  fullWidth?: boolean;
+  fullWidth: boolean;
   disabled?:boolean,
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void
 

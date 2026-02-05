@@ -1,6 +1,6 @@
 import styles from './coursesBlock.module.css';
 import CourseCard from '../CourseCard/CourseCard';
-import { CourseTypes } from '../../sharedTypes/shared.Types';
+import { CourseTypes } from '../../sharedTyres/shared.Types';
 
 interface CenterBLockProps {
   courses: CourseTypes[];

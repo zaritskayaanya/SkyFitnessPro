@@ -8,8 +8,8 @@ import { useState } from 'react';
 import { AxiosError } from 'axios';
 import { useAppDispatch } from '../../store/store';
 import { useModal } from '../../context/ModalContext';
-import { getToken } from '../../services/course/courseApi';
-import { regUser } from '../../services/auth/authApi';
+import { getToken } from '../../servises/course/courseApi';
+import { regUser } from '../../servises/auth/authApi';
 import { setToken, setUser } from '../../store/features/authSlice';
 import BaseButton from '../Button/Button';
 import { useRouter } from 'next/navigation';
@@ -45,7 +45,7 @@ export default function ModalRegister() {
   const onSubmit = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
 
-    if (!email.trim || !password.trim) {
+    if (!email.trim() || !password.trim()) {
       return setErrorMessage('Заполните все поля');
     }
 
@@ -63,6 +63,10 @@ export default function ModalRegister() {
       })
       .then((res) => {
         dispatch(setToken(res.token));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('user', email);
+          localStorage.setItem('token', res.token);
+        }
         closeRegister();
         router.push('/');
       })

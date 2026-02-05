@@ -2,50 +2,49 @@
 
 import styles from './modalProgress.module.css';
 import { useEffect, useState } from 'react';
-import { AxiosError } from 'axios';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import {
-  getWorkOutList,
   saveTrainProgress,
-} from '../../services/course/courseApi';
+} from '../../servises/course/courseApi';
 import BaseButton from '../Button/Button';
-import { WorkOutTypes } from '../../sharedTypes/shared.Types';
-import { useRouter } from 'next/navigation';
+import { setCurrentProgress } from '../../store/features/courseSlise';
+
+export interface ExerciseType {
+  _id: string;
+  name: string;
+  quantity: number;
+}
 
 export interface ModalWorkOutProps {
   courseId: string;
   workoutId: string;
   onClose: () => void;
-  initialProgress: number[]; 
-  onSaveProgress: (updatedProgress: number[]) => void;
+  initialProgress: number[];
+  exercises: ExerciseType[];
 }
+
 export default function ModalProgress({
   courseId,
   workoutId,
   onClose,
   initialProgress,
+  exercises,
 }: ModalWorkOutProps) {
   const dispatch = useAppDispatch();
   const token = useAppSelector((state) => state.auth.token);
-  const router = useRouter();
-  const [currentProgress, setCurrentProgress] = useState<number[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedWorkoutId, setSelectedWorkoutId] = useState<string | null>(
-    null,
-  );
-   const {workouts} = useAppSelector((state) => state.course);
   const [tempProgress, setTempProgress] = useState<number[]>(initialProgress);
+
   useEffect(() => {
     setTempProgress(initialProgress);
   }, [initialProgress]);
 
   const handleInputChange = (index: number, value: string) => {
-    
-    const numericValue = parseInt(value, 10) || 0;
-
+    const numericValue = parseInt(value, 10);
     const newProgress = [...tempProgress];
-    newProgress[index] = numericValue;
+    newProgress[index] = isNaN(numericValue) ? 0 : numericValue;
+
     setTempProgress(newProgress);
   };
 
@@ -54,20 +53,23 @@ export default function ModalProgress({
       setErrorMessage('Требуется авторизация.');
       return;
     }
-
     setIsLoading(true);
     setErrorMessage('');
 
     try {
-      // API ожидает { "progressData": [10, 0, 5] }
-      await saveTrainProgress(token, courseId, workoutId, {
-        progressData: tempProgress,
-      });
+      await saveTrainProgress(
+        courseId,
+        workoutId,
+        {
+          progressData: tempProgress,
+        },
+        token,
+      );
 
-      // Успех
-      // onSaveProgress(tempProgress);
+      dispatch(setCurrentProgress(tempProgress));
 
-      onClose(); 
+      alert('Успех');
+      onClose();
     } catch (error) {
       console.error('Ошибка сохранения прогресса:', error);
       setErrorMessage(
@@ -82,37 +84,41 @@ export default function ModalProgress({
     <div className={styles.wrapper}>
       <div className={styles.containerEnter}>
         <div className={styles.modal__block}>
-          <form className={styles.modal__form}>
+          <div className={styles.modal__form}>
             <button className={styles.modal__close} onClick={onClose}>
               X
             </button>
-            <h3>Мой прогресс {workoutId}</h3>
-
-            {tempProgress.map((progressValue, index) => (
-              <div key={index} >
-                <label >
-                  Сколько раз вы сделали {index + 1}?:
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={progressValue}
-                  onChange={(e) => handleInputChange(index, e.target.value)}
-                
-                />
-              </div>
-            ))}
-
-            {errorMessage && <div style={{ color: 'red' }}>{errorMessage}</div>}
-
+            <h4 className={styles.modal__title}>Мой прогресс</h4>
+            <form className={styles.inputContainer}>
+              {exercises && exercises.length > 0 ? (
+                exercises.map((el, index) => (
+                  <div key={el._id}>
+                    <p className={styles.modal__label}>
+                      Сколько раз вы сделали упражнение {el.name}? (Цель:{' '}
+                      {el.quantity})
+                    </p>
+                    <input
+                      className={styles.modal__input}
+                      type="text"
+                      min="0"
+                      max={el.quantity}
+                      placeholder="0"
+                      value={tempProgress[index] ?? 0}
+                      onChange={(e) => handleInputChange(index, e.target.value)}
+                    />
+                  </div>
+                ))
+              ) : (
+                <p>Ошибка: Цели упражнений не загружены.</p>
+              )}
+            </form>
             <BaseButton
               disabled={isLoading}
               onClick={handleSave}
               fullWidth={true}
               text={isLoading ? 'Сохранение...' : 'Сохранить прогресс'}
             />
-
-          </form>
+          </div>
         </div>
       </div>
     </div>

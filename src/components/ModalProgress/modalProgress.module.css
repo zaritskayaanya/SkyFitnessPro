@@ -2,22 +2,12 @@
   width: 100%;
   min-height: 100%;
   background-color: transparent;
-  /* position: fixed; 
-    z-index: 0; 
-    display: flex;
-    justify-content: center; 
-    align-items: center;     */
 }
 
 .containerEnter {
-  max-width: 100%;
-  height: 100vh;
   margin: 0 auto;
   position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  inset: 0;
   z-index: 4;
   background-color: rgba(0, 0, 0, 0.05);
 }
@@ -31,7 +21,8 @@
 }
 
 .modal__form {
-  width: 360px;
+  width: 426px;
+  box-sizing: border-box;
   background-color: #ffffff;
   border-radius: 30px;
   display: -webkit-box;
@@ -41,9 +32,9 @@
   -webkit-box-direction: normal;
   -ms-flex-direction: column;
   flex-direction: column;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
+  -webkit-box-align: start;
+  -ms-flex-align: start;
+  align-items: start;
   padding: 40px;
   box-shadow: 0px 4px 67px -12px rgba(0, 0, 0, 0.13);
   position: relative;
@@ -66,5 +57,80 @@
 .modal__title {
   font-size: 32px;
   font-weight: 400;
-  margin-bottom: 20px;
+  margin-bottom: 48px;
+  text-align: left;
+  line-height: 110%;
+}
+
+.inputContainer {
+  margin-bottom: 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: max-content;
+  max-height: 600px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: #000000;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: white;
+  }
+}
+
+.modal__input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d0cece;
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-top: 10px;
+  font-size: 18px;
+}
+
+.modal__input:-ms-input-placeholder {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 110%;
+  letter-spacing: 0;
+  color: #d0cece;
+}
+
+.modal__input::-ms-input-placeholder {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 110%;
+  letter-spacing: 0;
+  color: #d0cece;
+}
+
+.modal__input::-webkit-input-placeholder {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 110%;
+  letter-spacing: 0;
+  color: #d0cece;
+}
+
+.modal__label {
+  font-weight: 400;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.modal__titleCheck {
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 110%;
+  text-align: center;
+  margin-bottom: 40px;
 }

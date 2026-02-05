@@ -1,65 +1,107 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
 import { AxiosError } from 'axios';
 import styles from './workout.module.css';
 import { useAppDispatch, useAppSelector } from '../../../../../../store/store';
-import { WorkOutTypes } from '../../../../../../sharedTypes/shared.Types';
-import { getWorkOutId } from '../../../../../../services/course/courseApi';
+import { useParams } from 'next/navigation';
+import {
+  setCompletedWorkout,
+  setCurrentProgress,
+  setWorkoutData,
+} from '../../../../../../store/features/courseSlise';
+import {
+  getProgressTrain,
+  getWorkOutId,
+} from '../../../../../../servises/course/courseApi';
 import Header from '../../../../../../components/Header/Header';
 import BaseButton from '../../../../../../components/Button/Button';
 import ModalProgress from '../../../../../../components/ModalProgress/ModalProgress';
+import {
+  ProgressWorkOutTypes,
+  WorkOutTypes,
+} from '../../../../../../sharedTyres/shared.Types';
+import { useEffect, useState } from 'react';
 
 export default function WorkoutPage() {
   const dispatch = useAppDispatch();
   const params = useParams<{ courseId: string; workoutId: string }>();
-  const { allCourses } = useAppSelector((state) => state.course);
-  const workoutId = params.workoutId;
+  const { allCourses, workoutData, currentProgress } = useAppSelector(
+    (state) => state.course,
+  );
+  const workoutID = params.workoutId;
   const courseId = params.courseId;
+  const token = useAppSelector((state) => state.auth.token);
+
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const targetCourse = allCourses.find((course) => course._id === courseId);
   const courseName = targetCourse
     ? targetCourse.nameRU
     : 'Название курса не найдено';
-  const token = useAppSelector((state) => state.auth.token);
-  const [workoutData, setWorkoutData] = useState<WorkOutTypes | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentProgress, setCurrentProgress] = useState<number[]>([]);
 
   useEffect(() => {
-    if (!workoutId || !token) {
+    if (!workoutID || !courseId || !token) {
+      setIsLoading(false);
       return;
     }
 
-    getWorkOutId(workoutId, token)
-      .then((data: WorkOutTypes) => {
-        setWorkoutData(data);
-        setCurrentProgress(new Array(data.exercises.length).fill(0));
-        console.log(data);
-      })
-      .catch((error) => {
+    setIsLoading(true);
+    setErrorMessage('');
+
+    const loadData = async () => {
+      try {
+        const workoutDetails: WorkOutTypes = await getWorkOutId(
+          workoutID,
+          token,
+        );
+        dispatch(setWorkoutData(workoutDetails));
+
+        const initialProgress = new Array(workoutDetails.exercises.length).fill(
+          0,
+        );
+        dispatch(setCurrentProgress(initialProgress));
+
+        const progressList: ProgressWorkOutTypes = await getProgressTrain(
+          courseId,
+          workoutID,
+          token,
+        );
+        const currentProgress = progressList.progressData;
+
+        if (currentProgress && currentProgress.length) {
+          dispatch(setCurrentProgress(currentProgress));
+        }
+        if (progressList.workoutCompleted === true) {
+          dispatch(setCompletedWorkout(progressList.workoutId));
+        }
+      } catch (error) {
         if (error instanceof AxiosError && error.response) {
           setErrorMessage(
-            error.response.data.message || 'Ошибка загрузки тренировки',
+            error.response.data.message || 'Ошибка загрузки данных тренировки.',
           );
-        } else {
-          setErrorMessage('Ошибка сети или неизвестная ошибка.');
+        } else if (error instanceof Error) {
+          setErrorMessage(error.message);
         }
-      })
-      .finally(() => {
+        dispatch(setWorkoutData(null));
+      } finally {
         setIsLoading(false);
-      });
-  }, [workoutId, token]);
+      }
+    };
 
-  const workoutName = workoutData?.name || 'Тренировка';
-  const videoUrl = workoutData?.video;
+    loadData();
+  }, [workoutID, courseId, token, dispatch]);
+
+  function calcPercent(done: number, total: number) {
+    if (total === 0) return 0;
+    return Math.round((done / total) * 100);
+  }
 
   if (isLoading) {
     return (
       <div style={{ color: 'white', padding: '20px' }}>
-        Загрузка данных тренировки...
+        Загрузка данных тренировки и прогресса...
       </div>
     );
   }
@@ -72,69 +114,91 @@ export default function WorkoutPage() {
     );
   }
 
-  const onWorkOut = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    e.preventDefault();
-
-    openWorkOut();
-  };
-
-  const openWorkOut = () => {
-    setIsModalOpen(!isModalOpen);
-  };
-
-  const handleSaveProgress = (updatedProgress: number[]) => {
-  
-    setCurrentProgress(updatedProgress);
-    // добавить сообщение об успехе
-  };
+  const videoUrl = workoutData?.video;
 
   return (
     <div className={styles.workoutContainer}>
-      <Header />
-
       <h1 className={styles.workoutTitle}>{courseName}</h1>
-
-      <div className={styles.videoBlock}>
-        {videoUrl ? (
-          <iframe
-            width="100%"
-            height="639px"
-            src={videoUrl}
-            title={workoutName}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          ></iframe>
-        ) : (
-          <p style={{ color: 'black' }}>Ссылка на видео отсутствует.</p>
-        )}
-      </div>
-
+      {videoUrl ? (
+        <iframe
+          className={styles.videoBlock}
+          width="100%"
+          height="639px"
+          src={videoUrl}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        ></iframe>
+      ) : (
+        <p style={{ color: 'black' }}>Ссылка на видео отсутствует.</p>
+      )}
       <div className={styles.exercisesBlock}>
-        <h2 className={styles.exercisesBlockTitle}>Упражнения тренировки </h2>
+        <h2 className={styles.exercisesBlockTitle}>Упражнения тренировки</h2>
         <ul className={styles.exercisesBlockUl}>
-          {workoutData.exercises.map((exercise, index) => (
-            <li className={styles.exercisesBlockList} key={exercise._id}>
-              {exercise.name} ({currentProgress[index] || 0} %)
-            </li>
-          ))}
+          {workoutData.exercises.map((exercise, index) => {
+            const percent = calcPercent(
+              currentProgress[index],
+              exercise.quantity,
+            );
+            return (
+              <li className={styles.exercisesBlockList} key={exercise._id}>
+                {exercise.name} (
+                {(currentProgress[index] / exercise.quantity) * 100 || 0} %)
+                <div
+                  className={styles.course__done}
+                  style={{ width: `${percent}%` }}
+                ></div>
+              </li>
+            );
+          })}
         </ul>
-        <BaseButton
+<div>    <BaseButton
           disabled={isLoading}
-          onClick={onWorkOut}
+          onClick={() => setIsModalOpen(true)}
           fullWidth={false}
-          text="Заполнить свой прогресс"
-        />
-        {isModalOpen ? (
+          text = 'Заполнить свой прогресс'
+          // text={
+          //   currentProgress.length>0
+          //     ? 'Обновить свой прогресс'
+          //     : 'Заполнить свой прогресс'
+          // }
+        /></div>
+    
+        {isModalOpen && (
           <ModalProgress
-            key={workoutId}
+            key={workoutID}
             courseId={courseId}
-            workoutId={workoutId}
-            initialProgress={currentProgress}
-            onSaveProgress={handleSaveProgress}
+            workoutId={workoutID}
+            exercises={workoutData.exercises}
+            initialProgress={currentProgress || []}
             onClose={() => setIsModalOpen(false)}
           />
-        ) : null}
+        )}
       </div>
     </div>
   );
 }
+{/* <ul className={styles.exercisesBlockUl}>
+        {workoutData.exercises.map((exercise, index) => {
+            
+            // 1. Безопасный доступ к прогрессу: 
+            // Если currentProgress пуст, берем 0, иначе берем значение по индексу
+            const currentAmount = currentProgress[index] ?? 0; 
+            
+            const percent = calcPercent(
+                currentAmount, // Передаем гарантированное число (0, если нет данных)
+                exercise.quantity,
+            );
+            
+            return (
+                <li className={styles.exercisesBlockList} key={exercise._id}>
+                    {exercise.name} (
+                    {(currentAmount / exercise.quantity) * 100 || 0} %) 
+                    {/* Тут тоже используем currentAmount, а не currentProgress[index] */}
+    //                 <div
+    //                     className={styles.course__done}
+    //                     style={{ width: `${percent}%` }}
+    //                 ></div>
+    //             </li>
+    //         );
+    //     })}
+    // </ul> */}

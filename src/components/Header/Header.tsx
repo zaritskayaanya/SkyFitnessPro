@@ -1,10 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import styles from './header.module.css';
 import Image from 'next/image';
 import Link from 'next/link';
 import BaseButton from '../Button/Button';
-import { useState } from 'react';
 import { useAppSelector } from '../../store/store';
 import ModalUser from '../ModalUser/ModalUser';
 import { useModal } from '../../context/ModalContext';
@@ -12,8 +12,14 @@ import { useModal } from '../../context/ModalContext';
 export default function Header() {
   const user = useAppSelector((state) => state.auth.user);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoading, seteIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { openLogin } = useModal();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
   };
@@ -29,21 +35,31 @@ export default function Header() {
             Онлайн-тренировки для занятий дома
           </p>
         </div>
-        {!user && (
-          <BaseButton disabled={isLoading} onClick={openLogin} text="Войти" />
-        )}
-        {user && (
-          <div className={styles.header__user} onClick={toggleModal}>
-            <Image
-              src="/img/Profile.png"
-              alt="profile"
-              width={50}
-              height={50}
-            />
-            <p className={styles.header__userText}>{user}</p>
-          </div>
-        )}
-        {user && (isModalOpen ? <ModalUser /> : null)}
+        {isMounted ? (
+          <>
+            {!user && (
+              <BaseButton
+                disabled={isLoading}
+                onClick={openLogin}
+                text="Войти"
+                fullWidth={true}
+              />
+            )}
+            {user && (
+              <div className={styles.header__user} onClick={toggleModal}>
+                <Image
+                  src="/img/Profile.png"
+                  alt="profile"
+                  width={50}
+                  height={50}
+                />
+                <p className={styles.header__userText}>{user}</p>
+              </div>
+            )}
+           
+          </>
+        ) : null}
+         {user && (isModalOpen ? <ModalUser /> : null)}
       </div>
     </div>
   );
