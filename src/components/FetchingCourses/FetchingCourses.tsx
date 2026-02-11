@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/store';
-import { AxiosError } from 'axios';
 import {
   setAllCourses,
   setFetchError,
@@ -24,22 +23,15 @@ export default function FetchingCourses() {
           dispatch(setAllCourses(res));
         })
         .catch((err) => {
-          if (err instanceof AxiosError) {
-            if (err.response) {
-              setFetchError(err.response.data.message);
-            } else if (err.request) {
-              setFetchError('Что-то с интернетом');
-            } else {
-              console.log('error:', err);
-              setFetchError('Неизвестная ошибка');
-            }
-          }
+          dispatch(
+            setFetchError(err instanceof Error ? err.message : 'Неизвестная ошибка'),
+          );
         })
         .finally(() => {
           dispatch(setFetchIsLoading(false));
         });
     }
-  }, []);
+  }, [allCourses, dispatch]);
 
   return <></>;
 }

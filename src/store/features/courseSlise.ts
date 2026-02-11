@@ -2,7 +2,6 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
   CourseTypes,
   ProgressWorkOutCourseTypes,
-  ProgressWorkOutTypes,
   WorkOutTypes,
 } from '../../sharedTyres/shared.Types';
 
@@ -23,12 +22,14 @@ type initialStateType = {
   workoutData: WorkOutTypes | null; // по тренировке
   completedStatus: boolean;
   completedWorkout: string[];
+  /** Завершённые тренировки по курсам: courseId -> workoutId[] */
+  completedWorkoutsByCourse: Record<string, string[]>;
   courseProgress: {
     [courseId: string]: ProgressWorkOutCourseTypes; // прогресс по курсу
   };
 };
 
-const initialState: initialStateType = {
+export const courseInitialState: initialStateType = {
   currentCourse: null,
   courseList: [],
   allCourses: [],
@@ -45,12 +46,13 @@ const initialState: initialStateType = {
   workoutData: null,
   completedStatus: false,
   completedWorkout: [],
+  completedWorkoutsByCourse: {},
   courseProgress: {},
 };
 
 const courseSlice = createSlice({
   name: 'course',
-  initialState,
+  initialState: courseInitialState,
   reducers: {
     setCurrentCourse: (state, action: PayloadAction<CourseTypes>) => {
       state.currentCourse = action.payload;
@@ -101,6 +103,34 @@ const courseSlice = createSlice({
       state.completedWorkout = [...state.completedWorkout, action.payload];
     },
 
+    setCompletedWorkoutForCourse: (
+      state,
+      action: PayloadAction<{ courseId: string; workoutId: string }>,
+    ) => {
+      const { courseId, workoutId } = action.payload;
+      const list = state.completedWorkoutsByCourse[courseId] ?? [];
+      if (!list.includes(workoutId)) {
+        state.completedWorkoutsByCourse[courseId] = [...list, workoutId];
+      }
+    },
+
+    setCompletedWorkoutsForCourse: (
+      state,
+      action: PayloadAction<{ courseId: string; workoutIds: string[] }>,
+    ) => {
+      const { courseId, workoutIds } = action.payload;
+      state.completedWorkoutsByCourse[courseId] = Array.isArray(workoutIds)
+        ? workoutIds
+        : [];
+    },
+
+    clearCompletedWorkoutsForCourse: (
+      state,
+      action: PayloadAction<string>,
+    ) => {
+      delete state.completedWorkoutsByCourse[action.payload];
+    },
+
     addCourse: (state, action: PayloadAction<CourseTypes>) => {
       state.myCourses = [...state.myCourses, action.payload];
     },
@@ -113,11 +143,19 @@ const courseSlice = createSlice({
       state.addedCourseId = null;
     },
 
-    resetCourseAdditionStatus: (state) => {
+    resetCourseAdditionStatus: (
+      state,
+      action: PayloadAction<string | undefined>,
+    ) => {
+      const courseId = action.payload;
       state.currentProgress = [];
       state.totalWorkoutProgress = null;
       state.completedStatus = false;
       state.completedWorkout = [];
+      if (courseId) {
+        delete state.completedWorkoutsByCourse[courseId];
+        delete state.courseProgress[courseId];
+      }
     },
 
     setFetchError: (state, action: PayloadAction<string>) => {
@@ -142,6 +180,9 @@ export const {
   setCurrentProgress,
   setWorkouts,
   setCompletedWorkout,
+  setCompletedWorkoutForCourse,
+  setCompletedWorkoutsForCourse,
+  clearCompletedWorkoutsForCourse,
   setWorkoutData,
   setTotalWorkoutProgress,
   setCurrentProgressCourse,

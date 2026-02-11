@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { BASE_URL } from '../constants';
 
 interface authUserForm {
@@ -6,45 +5,73 @@ interface authUserForm {
   password: string;
 }
 
-interface authUserReturn {
-  email: string;
-  password: string;
-  _id: number;
+export interface AuthUserResponse {
+  token: string;
 }
 
-export const authUser = (data: authUserForm): Promise<authUserReturn> => {
-  return axios.post(BASE_URL + '/api/fitness/auth/login/', data, {
-    headers: { 'Content-Type': '' },
+export interface RegisterResponse {
+  message: string;
+}
+
+/**
+ * Авторизация пользователя.
+ * POST /api/fitness/auth/login
+ * Как в рабочем проекте: fetch без Content-Type, только body: JSON.stringify(...)
+ */
+export const authUser = async (
+  data: authUserForm,
+): Promise<AuthUserResponse> => {
+  const response = await fetch(`${BASE_URL}/api/fitness/auth/login`, {
+    method: 'POST',
+    body: JSON.stringify({
+      email: data.email.trim(),
+      password: data.password,
+    }),
   });
+
+  const resData = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const msg =
+      typeof resData?.message === 'string'
+        ? resData.message
+        : 'Ошибка входа';
+    throw new Error(msg);
+  }
+
+  return resData as AuthUserResponse;
 };
 
-export const regUser = ({
+/**
+ * Регистрация пользователя.
+ * POST /api/fitness/auth/register
+ * fetch без Content-Type.
+ */
+export const regUser = async ({
   email,
   password,
-}: authUserForm): Promise<string> => {
-  return axios.post(
-    BASE_URL + '/api/fitness/auth/register/',
-    {
-      email,
-      password,
-      username: email,
-    },
-    {
-      headers: { 'Content-Type': '' },
-    },
-  );
+}: authUserForm): Promise<RegisterResponse> => {
+  const response = await fetch(`${BASE_URL}/api/fitness/auth/register`, {
+    method: 'POST',
+    body: JSON.stringify({ email: email.trim(), password }),
+  });
+
+  const resData = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const msg =
+      typeof resData?.message === 'string'
+        ? resData.message
+        : 'Ошибка регистрации';
+    throw new Error(msg);
+  }
+
+  return resData as RegisterResponse;
 };
 
-export const getToken = async ({
-  email,
-  password,
-}: authUserForm): Promise<string> => {
-  const res = await axios.post(
-    BASE_URL + '/api/fitness/auth/login/',
-    { email, password },
-    {
-      headers: { 'Content-Type': '' },
-    },
-  );
-  return res.data;
+/** Для совместимости, если где-то вызывают getToken */
+export const getToken = async (
+  data: authUserForm,
+): Promise<AuthUserResponse> => {
+  return authUser(data);
 };

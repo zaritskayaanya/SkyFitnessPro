@@ -7,7 +7,10 @@ import {
   saveTrainProgress,
 } from '../../servises/course/courseApi';
 import BaseButton from '../Button/Button';
-import { setCurrentProgress } from '../../store/features/courseSlise';
+import {
+  setCurrentProgress,
+  setCompletedWorkoutForCourse,
+} from '../../store/features/courseSlise';
 
 export interface ExerciseType {
   _id: string;
@@ -15,10 +18,12 @@ export interface ExerciseType {
   quantity: number;
 }
 
-export interface ModalWorkOutProps {
+export interface ModalProgressProps {
   courseId: string;
   workoutId: string;
   onClose: () => void;
+  /** Вызывается после успешного сохранения — можно показать модалку «Ваш прогресс засчитан!» */
+  onSuccess?: () => void;
   initialProgress: number[];
   exercises: ExerciseType[];
 }
@@ -27,9 +32,10 @@ export default function ModalProgress({
   courseId,
   workoutId,
   onClose,
+  onSuccess,
   initialProgress,
   exercises,
-}: ModalWorkOutProps) {
+}: ModalProgressProps) {
   const dispatch = useAppDispatch();
   const token = useAppSelector((state) => state.auth.token);
   const [errorMessage, setErrorMessage] = useState('');
@@ -57,7 +63,7 @@ export default function ModalProgress({
     setErrorMessage('');
 
     try {
-      await saveTrainProgress(
+      const res = await saveTrainProgress(
         courseId,
         workoutId,
         {
@@ -67,14 +73,17 @@ export default function ModalProgress({
       );
 
       dispatch(setCurrentProgress(tempProgress));
+      if (res?.workoutCompleted) {
+        dispatch(
+          setCompletedWorkoutForCourse({ courseId, workoutId }),
+        );
+      }
 
-      alert('Успех');
       onClose();
-    } catch (error) {
-      console.error('Ошибка сохранения прогресса:', error);
-      setErrorMessage(
-        'Не удалось сохранить прогресс. Проверьте формат данных.',
-      );
+      onSuccess?.();
+    } catch {
+      const msg = 'Не удалось сохранить прогресс. Проверьте формат данных.';
+      setErrorMessage(msg);
     } finally {
       setIsLoading(false);
     }
@@ -112,6 +121,9 @@ export default function ModalProgress({
                 <p>Ошибка: Цели упражнений не загружены.</p>
               )}
             </form>
+            {errorMessage && (
+              <p className={styles.errorText}>{errorMessage}</p>
+            )}
             <BaseButton
               disabled={isLoading}
               onClick={handleSave}

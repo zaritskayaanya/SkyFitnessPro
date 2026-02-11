@@ -5,12 +5,11 @@ import classNames from 'classnames';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
-import { AxiosError } from 'axios';
 import { useAppDispatch } from '../../store/store';
 import { useModal } from '../../context/ModalContext';
-import { getToken } from '../../servises/course/courseApi';
-import { regUser } from '../../servises/auth/authApi';
+import { authUser, regUser } from '../../servises/auth/authApi';
 import { setToken, setUser } from '../../store/features/authSlice';
+import { saveAuthState } from '../../store/features/authSrorage';
 import BaseButton from '../Button/Button';
 import { useRouter } from 'next/navigation';
 
@@ -53,35 +52,29 @@ export default function ModalRegister() {
       return setErrorMessage('Пароли не совпадают');
     }
 
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
     seteIsLoading(true);
     setErrorMessage('');
 
-    regUser({ email, password })
-      .then(() => {
-        dispatch(setUser(email));
-        return getToken({ email, password });
-      })
+    regUser({ email: trimmedEmail, password: trimmedPassword })
+      .then(() => authUser({ email: trimmedEmail, password: trimmedPassword }))
       .then((res) => {
-        dispatch(setToken(res.token));
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('user', email);
-          localStorage.setItem('token', res.token);
+        const token = res?.token;
+        if (!token) {
+          setErrorMessage('Не удалось войти после регистрации');
+          return;
         }
+        dispatch(setUser(trimmedEmail));
+        dispatch(setToken(token));
+        saveAuthState(trimmedEmail, token);
         closeRegister();
         router.push('/');
       })
-
       .catch((error) => {
-        if (error instanceof AxiosError) {
-          if (error.response) {
-            console.log(error.response.data);
-            setErrorMessage(error.response.data.message);
-          } else if (error.request) {
-            setErrorMessage('Что-то с интернетом');
-          } else {
-            setErrorMessage('Неизвестная ошибка');
-          }
-        }
+        setErrorMessage(
+          error instanceof Error ? error.message : 'Неизвестная ошибка',
+        );
       })
       .finally(() => {
         seteIsLoading(false);

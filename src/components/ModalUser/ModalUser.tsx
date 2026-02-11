@@ -5,24 +5,32 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { logout } from '../../store/features/authSlice';
+import { clearAuthState } from '../../store/features/authSrorage';
 import { useAppSelector } from '../../store/store';
 import BaseButton from '../Button/Button';
 
-export default function ModalUser() {
+type ModalUserProps = {
+  onClose?: () => void;
+};
+
+export default function ModalUser({ onClose }: ModalUserProps) {
   const user = useAppSelector((state) => state.auth.user);
   const router = useRouter();
   const dispatch = useDispatch();
 
-  const [isLoading, seteIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const onMyProfil = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
-    seteIsLoading(true);
+    setIsLoading(true);
+    onClose?.();
     router.push('/users/me/courses');
   };
 
   const onLogout = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
+    onClose?.();
+    clearAuthState();
     dispatch(logout());
     router.push('/');
   };

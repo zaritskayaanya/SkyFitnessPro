@@ -12,7 +12,12 @@ type BaseButton = {
 export default function BaseButton({ text, fullWidth = false, disabled, onClick }: BaseButton) {
 
   return (
-    <button className={fullWidth ? styles.fullWidth : styles.button} disabled={disabled} onClick={onClick}>
+    <button
+      type="button"
+      className={fullWidth ? styles.fullWidth : styles.button}
+      disabled={disabled}
+      onClick={onClick}
+    >
       {text}
     </button>
   );

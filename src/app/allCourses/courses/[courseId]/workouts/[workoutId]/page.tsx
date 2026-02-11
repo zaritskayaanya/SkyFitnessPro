@@ -1,11 +1,10 @@
 'use client';
 
-import { AxiosError } from 'axios';
 import styles from './workout.module.css';
 import { useAppDispatch, useAppSelector } from '../../../../../../store/store';
 import { useParams } from 'next/navigation';
 import {
-  setCompletedWorkout,
+  setCompletedWorkoutForCourse,
   setCurrentProgress,
   setWorkoutData,
 } from '../../../../../../store/features/courseSlise';
@@ -13,14 +12,15 @@ import {
   getProgressTrain,
   getWorkOutId,
 } from '../../../../../../servises/course/courseApi';
-import Header from '../../../../../../components/Header/Header';
 import BaseButton from '../../../../../../components/Button/Button';
 import ModalProgress from '../../../../../../components/ModalProgress/ModalProgress';
+import ModalSuccess from '../../../../../../components/ModalSuccess/ModalSucces';
 import {
   ProgressWorkOutTypes,
   WorkOutTypes,
 } from '../../../../../../sharedTyres/shared.Types';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 export default function WorkoutPage() {
   const dispatch = useAppDispatch();
@@ -35,6 +35,7 @@ export default function WorkoutPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const targetCourse = allCourses.find((course) => course._id === courseId);
   const courseName = targetCourse
@@ -74,16 +75,17 @@ export default function WorkoutPage() {
           dispatch(setCurrentProgress(currentProgress));
         }
         if (progressList.workoutCompleted === true) {
-          dispatch(setCompletedWorkout(progressList.workoutId));
+          dispatch(
+            setCompletedWorkoutForCourse({
+              courseId,
+              workoutId: progressList.workoutId,
+            }),
+          );
         }
       } catch (error) {
-        if (error instanceof AxiosError && error.response) {
-          setErrorMessage(
-            error.response.data.message || 'Ошибка загрузки данных тренировки.',
-          );
-        } else if (error instanceof Error) {
-          setErrorMessage(error.message);
-        }
+        setErrorMessage(
+          error instanceof Error ? error.message : 'Ошибка загрузки данных тренировки.',
+        );
         dispatch(setWorkoutData(null));
       } finally {
         setIsLoading(false);
@@ -118,6 +120,10 @@ export default function WorkoutPage() {
 
   return (
     <div className={styles.workoutContainer}>
+      <Link href="/users/me/courses" className={styles.backLink}>
+        <span className={styles.backArrow}>←</span>
+        <span>Мои курсы</span>
+      </Link>
       <h1 className={styles.workoutTitle}>{courseName}</h1>
       {videoUrl ? (
         <iframe
@@ -135,14 +141,12 @@ export default function WorkoutPage() {
         <h2 className={styles.exercisesBlockTitle}>Упражнения тренировки</h2>
         <ul className={styles.exercisesBlockUl}>
           {workoutData.exercises.map((exercise, index) => {
-            const percent = calcPercent(
-              currentProgress[index],
-              exercise.quantity,
-            );
+            const done = currentProgress[index] ?? 0;
+            const percent = calcPercent(done, exercise.quantity);
             return (
               <li className={styles.exercisesBlockList} key={exercise._id}>
                 {exercise.name} (
-                {(currentProgress[index] / exercise.quantity) * 100 || 0} %)
+                {(exercise.quantity ? (done / exercise.quantity) * 100 : 0).toFixed(0)} %)
                 <div
                   className={styles.course__done}
                   style={{ width: `${percent}%` }}
@@ -151,54 +155,29 @@ export default function WorkoutPage() {
             );
           })}
         </ul>
-<div>    <BaseButton
-          disabled={isLoading}
-          onClick={() => setIsModalOpen(true)}
-          fullWidth={false}
-          text = 'Заполнить свой прогресс'
-          // text={
-          //   currentProgress.length>0
-          //     ? 'Обновить свой прогресс'
-          //     : 'Заполнить свой прогресс'
-          // }
-        /></div>
-    
-        {isModalOpen && (
-          <ModalProgress
-            key={workoutID}
-            courseId={courseId}
-            workoutId={workoutID}
-            exercises={workoutData.exercises}
-            initialProgress={currentProgress || []}
-            onClose={() => setIsModalOpen(false)}
+        <div>
+          <BaseButton
+            disabled={isLoading}
+            onClick={() => setIsModalOpen(true)}
+            fullWidth={false}
+            text="Заполнить свой прогресс"
           />
-        )}
+        </div>
+      {isModalOpen && (
+        <ModalProgress
+          key={workoutID}
+          courseId={courseId}
+          workoutId={workoutID}
+          exercises={workoutData.exercises}
+          initialProgress={currentProgress || []}
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={() => setShowSuccessModal(true)}
+        />
+      )}
+      {showSuccessModal && (
+        <ModalSuccess onClose={() => setShowSuccessModal(false)} />
+      )}
       </div>
     </div>
   );
 }
-{/* <ul className={styles.exercisesBlockUl}>
-        {workoutData.exercises.map((exercise, index) => {
-            
-            // 1. Безопасный доступ к прогрессу: 
-            // Если currentProgress пуст, берем 0, иначе берем значение по индексу
-            const currentAmount = currentProgress[index] ?? 0; 
-            
-            const percent = calcPercent(
-                currentAmount, // Передаем гарантированное число (0, если нет данных)
-                exercise.quantity,
-            );
-            
-            return (
-                <li className={styles.exercisesBlockList} key={exercise._id}>
-                    {exercise.name} (
-                    {(currentAmount / exercise.quantity) * 100 || 0} %) 
-                    {/* Тут тоже используем currentAmount, а не currentProgress[index] */}
-    //                 <div
-    //                     className={styles.course__done}
-    //                     style={{ width: `${percent}%` }}
-    //                 ></div>
-    //             </li>
-    //         );
-    //     })}
-    // </ul> */}

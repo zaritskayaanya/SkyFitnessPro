@@ -2,28 +2,25 @@
 
 import Image from 'next/image';
 import styles from '../CenterBlock/centerBlock.module.css';
+import cardStyles from './courseCard.module.css';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  CourseTypes,
-  ProgressWorkOutCourseTypes,
-} from '../../sharedTyres/shared.Types';
+import { CourseTypes, ProgressWorkOutCourseTypes } from '../../sharedTyres/shared.Types';
 import BaseButton from '../Button/Button';
 import { useCourse } from '../../hooks/useCourse';
 import { useModal } from '../../context/ModalContext';
 import ModalWorkOut from '../ModalWorkOut/ModalWorkOut';
 import {
   resetCourseAdditionStatus,
-  setCompleted,
   setCurrentCourse,
   setCurrentProgressCourse,
+  setCompletedWorkoutsForCourse,
 } from '../../store/features/courseSlise';
 import {
   deleteAllCourseProgress,
   getProgressCourse,
 } from '../../servises/course/courseApi';
-import { AxiosError } from 'axios';
 import { useCourseProgress } from '../../hooks/useCourseProgres';
 
 interface CourseTypeProp {
@@ -44,50 +41,37 @@ export default function CourseCard({ course }: CourseTypeProp) {
     state.course.myCourses.some((c) => c._id === course._id),
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { currentProgress } = useAppSelector((state) => state.course);
-  const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-  if (!courseId || !token) {
-    return;
-  }
+    if (!courseId || !token) {
+      return;
+    }
 
-  getProgressCourse(courseId, token)
-    .then((res: ProgressWorkOutCourseTypes) => {
-      const payload = {
-        courseId: courseId,           
-        progress: res,               
-      };
+    getProgressCourse(courseId, token)
+      .then((res: ProgressWorkOutCourseTypes) => {
+        dispatch(
+          setCurrentProgressCourse({
+            courseId,
+            progress: res,
+          }),
+        );
+        const completedIds =
+          res?.workoutsProgress
+            ?.filter((w) => w.workoutCompleted)
+            .map((w) => w.workoutId) ?? [];
+        dispatch(setCompletedWorkoutsForCourse({ courseId, workoutIds: completedIds }));
+      })
+      .catch(() => {})
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [courseId, token, dispatch]);
 
-      dispatch(setCurrentProgressCourse(payload)); 
+  const totalWorkouts = course.workouts?.length ?? 0;
+  const finalPercentage = useCourseProgress(courseId, totalWorkouts);
 
-      if (res) {
-        const completionStatus = res.courseCompleted;
-        dispatch(setCompleted(completionStatus));
-      }
-    })
-    .catch((error) => {
-      if (error instanceof AxiosError) {
-        if (error.response) {
-          console.log(error.response.data);
-          setErrorMessage(error.response.data.message);
-        } else if (error.request) {
-          setErrorMessage('Что-то с интернетом');
-        } else {
-          setErrorMessage('Неизвестная ошибка');
-        }
-      }
-    })
-    .finally(() => {
-      setIsLoading(false);
-    });
-  }, [courseId, token]);
-
-
-  const finalPercentage = useCourseProgress();
-
-  const onCourse = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const onCourse = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
     e.preventDefault();
     setIsLoading(true);
     router.push(`/allCourses/courses/${courseId}`);
@@ -96,24 +80,21 @@ export default function CourseCard({ course }: CourseTypeProp) {
   const handleStartOrContinue = useCallback(
     (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
       e.preventDefault();
-      setIsLoading(true);
-
+      e.stopPropagation();
       setCurrentCourse(course);
       setIsModalOpen(true);
-
-      setIsLoading(false);
     },
-    [course, setIsModalOpen],
+    [course],
   );
 
   const handleReset = useCallback(
     (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
       e.preventDefault();
+      e.stopPropagation();
       setIsLoading(true);
-
       deleteAllCourseProgress(courseId, token).finally(() => {
         setIsLoading(false);
-        dispatch(resetCourseAdditionStatus());
+        dispatch(resetCourseAdditionStatus(courseId));
       });
     },
     [courseId, token, dispatch],
@@ -138,7 +119,19 @@ export default function CourseCard({ course }: CourseTypeProp) {
   const OnMyProfileCoursesPage = pathname === '/users/me/courses';
 
   return (
-    <div className={styles.center__courses}>
+    <div
+      className={`${styles.center__courses} ${cardStyles.card}`}
+      onClick={onCourse}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          router.push(`/allCourses/courses/${courseId}`);
+        }
+      }}
+      aria-label={`Перейти к курсу ${course.nameRU}`}
+    >
       <div className={styles.center__course}>
         <div className={styles.center__courseIMG}>
           <Image
@@ -152,7 +145,16 @@ export default function CourseCard({ course }: CourseTypeProp) {
 
         {user ? (
           !isCourseInMyCourses ? (
-            <button onClick={toggleAddRemove} className={styles.course__Image}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleAddRemove(e);
+              }}
+              className={`${styles.course__Image} ${cardStyles.cardAddButton}`}
+              title="Добавить курс"
+              style={{ cursor: 'pointer' }}
+            >
               <div className={styles.course__add__svg}>
                 <Image
                   src="/icon/Add-in-Circle.svg"
@@ -164,7 +166,16 @@ export default function CourseCard({ course }: CourseTypeProp) {
               </div>
             </button>
           ) : (
-            <button onClick={toggleAddRemove} className={styles.course__Image}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleAddRemove(e);
+              }}
+              className={`${styles.course__Image} ${cardStyles.cardAddButton}`}
+              title="Удалить курс"
+              style={{ cursor: 'pointer' }}
+            >
               <div className={styles.course__add__svg}>
                 <Image
                   src="/icon/Remove.svg"
@@ -177,7 +188,16 @@ export default function CourseCard({ course }: CourseTypeProp) {
             </button>
           )
         ) : (
-          <button onClick={openLogin} className={styles.course__Image}>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              openLogin();
+            }}
+            className={`${styles.course__Image} ${cardStyles.cardAddButton}`}
+            title="Войти для добавления курса"
+            style={{ cursor: 'pointer' }}
+          >
             <div className={styles.course__add__svg}>
               <Image
                 src="/icon/Add-in-Circle.svg"
@@ -191,7 +211,7 @@ export default function CourseCard({ course }: CourseTypeProp) {
         )}
         <div className={styles.course__block}>
           <h3 className={styles.course__title}>{course.nameRU}</h3>
-          <div className={styles.course__course} onClick={onCourse}>
+          <div className={styles.course__course}>
             <div className={styles.course__blockAbout}>
               <div className={styles.course__about}>
                 <div className={styles.course__Image}>
@@ -237,16 +257,9 @@ export default function CourseCard({ course }: CourseTypeProp) {
           {isCourseInMyCourses && OnMyProfileCoursesPage && (
             <div>
               <div>
-                {Array.isArray(currentProgress) &&
-                currentProgress.length > 0 ? (
-                  <p className={styles.course__progressText}>
-                    Прогресс:
-                    {finalPercentage}%
-                  </p>
-                ) : (
-                  <p className={styles.course__progressText}>Прогресс: 0%</p>
-                )}
-
+                <p className={styles.course__progressText}>
+                  Прогресс: {finalPercentage}%
+                </p>
                 <div
                   className={styles.course__progress}
                   style={{ width: `${finalPercentage}%` }}

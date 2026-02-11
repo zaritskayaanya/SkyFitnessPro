@@ -2,7 +2,6 @@
 
 import styles from './modalWorkOut.module.css';
 import { useEffect, useState } from 'react';
-import { AxiosError } from 'axios';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { getWorkOutList } from '../../servises/course/courseApi';
 import BaseButton from '../Button/Button';
@@ -24,9 +23,10 @@ export default function ModalWorkOut({ courseId, onClose }: ModalWorkOutProps) {
   const [selectedWorkoutId, setSelectedWorkoutId] = useState<string | null>(
     null,
   );
-  const { workouts, completedWorkout } = useAppSelector(
+  const { workouts, completedWorkoutsByCourse } = useAppSelector(
     (state) => state.course,
   );
+  const completedWorkout = completedWorkoutsByCourse[courseId] ?? [];
 
   const sortedWorkouts = [...workouts].sort((a, b) => {
     const getLessonNumber = (name: string): number => {
@@ -50,39 +50,32 @@ export default function ModalWorkOut({ courseId, onClose }: ModalWorkOutProps) {
         }
       })
       .catch((error) => {
-        if (error instanceof AxiosError) {
-          if (error.response) {
-            console.log(error.response.data);
-            setErrorMessage(error.response.data.message);
-          } else if (error.request) {
-            setErrorMessage('Что-то с интернетом');
-          } else {
-            setErrorMessage('Неизвестная ошибка');
-          }
-        }
+        setErrorMessage(
+          error instanceof Error ? error.message : 'Неизвестная ошибка',
+        );
       })
       .finally(() => {
         setIsLoading(false);
       });
   }, [courseId, token, dispatch]);
 
-  const onSubmit = async (
+  const onSubmit = (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
   ) => {
     e.preventDefault();
+    e.stopPropagation();
 
     if (!selectedWorkoutId) {
       setErrorMessage('Сначала выберите тренировку.');
       return;
     }
-    setIsLoading(false);
     router.push(
       `/allCourses/courses/${courseId}/workouts/${selectedWorkoutId}`,
     );
   };
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} onClick={(e) => e.stopPropagation()}>
       <div className={styles.containerEnter}>
         <div className={styles.modal__block}>
           <form className={styles.modal__form}>
@@ -97,7 +90,7 @@ export default function ModalWorkOut({ courseId, onClose }: ModalWorkOutProps) {
               ) : workouts.length === 0 ? (
                 <p>Тренировок нет.</p>
               ) : (
-                workouts.map((workout) => {
+                sortedWorkouts.map((workout) => {
                   const isSelected = selectedWorkoutId === workout._id;
                   const isCompleted = completedWorkout.includes(workout._id);
 

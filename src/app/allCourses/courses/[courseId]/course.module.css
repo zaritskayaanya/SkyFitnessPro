@@ -205,6 +205,7 @@
   top: 60px;
   right: 0;
   z-index: 2;
+  pointer-events: none;
   @media screen and (max-width: 495px) {
     width: 288.77px;
     height: 288.77px;
@@ -222,6 +223,7 @@
   right: 378px;
   position: absolute;
   z-index: 0;
+  pointer-events: none;
   @media screen and (max-width: 495px) {
     width: 32.16px;
     height: 27.33px;
@@ -236,6 +238,7 @@
   position: absolute;
   right: -25;
   z-index: 1;
+  pointer-events: none;
   @media screen and (max-width: 495px) {
     width: 431.03px;
     height: 251.47px;

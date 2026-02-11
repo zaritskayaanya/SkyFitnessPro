@@ -8,6 +8,7 @@ import {
   setMyCourseIds,
   setMyCourses,
 } from '../store/features/courseSlise';
+import { saveMyCourseIds } from '../store/features/courseStorage';
 import { getCoursesMe, getProgressCourse } from '../servises/course/courseApi';
 import { ProgressWorkOutCourseTypes } from '../sharedTyres/shared.Types';
 
@@ -29,14 +30,18 @@ export const useMyCoursesDataAndProgress = () => {
     dispatch(setFetchIsLoading(true));
     getCoursesMe(token)
       .then((res) => {
-        dispatch(setMyCourseIds(res.user.selectedCourses));
+        const serverIds = res.user.selectedCourses ?? [];
+        const merged = Array.from(new Set([...myCourseIds, ...serverIds]));
+        dispatch(setMyCourseIds(merged));
+        saveMyCourseIds(merged);
       })
-      .catch((err) => {
+      .catch(() => {
         dispatch(setFetchError('Ошибка загрузки списка курсов'));
       })
       .finally(() => {
         dispatch(setFetchIsLoading(false));
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- загрузка только при пустом myCourseIds
   }, [dispatch, token, myCourseIds.length, fetchIsLoading]);
 
 
@@ -72,12 +77,7 @@ export const useMyCoursesDataAndProgress = () => {
               }),
             );
           })
-          .catch((error) => {
-            console.error(
-              `Error fetching progress for course ${courseId}`,
-              error,
-            );
-          });
+          .catch(() => {});
       }
     });
   }, [myCourseIds, token, dispatch, courseProgress]);

@@ -6,11 +6,10 @@ import classNames from 'classnames';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
-import { AxiosError } from 'axios';
 import { useRouter } from 'next/navigation';
 import { authUser } from '../../servises/auth/authApi';
 import { setToken, setUser } from '../../store/features/authSlice';
-import { getToken } from '../../servises/course/courseApi';
+import { saveAuthState } from '../../store/features/authSrorage';
 import BaseButton from '../Button/Button';
 import { useAppDispatch } from '../../store/store';
 
@@ -39,34 +38,28 @@ export default function ModalLogin() {
     if (!email.trim() || !password.trim()) {
       return setErrorMessage('Заполните все поля');
     }
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
     setIsLoading(true);
     setErrorMessage('');
 
-    authUser({ email, password })
-      .then(() => {
-        dispatch(setUser(email));
-        return getToken({ email, password });
-      })
+    authUser({ email: trimmedEmail, password: trimmedPassword })
       .then((res) => {
-        dispatch(setToken(res.token));
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('user', email);
-          localStorage.setItem('token', res.token);
+        const token = res?.token;
+        if (!token) {
+          setErrorMessage('Сервер не вернул токен');
+          return;
         }
+        dispatch(setUser(trimmedEmail));
+        dispatch(setToken(token));
+        saveAuthState(trimmedEmail, token);
         closeLogin();
         router.push('/');
       })
       .catch((error) => {
-        if (error instanceof AxiosError) {
-          if (error.response) {
-            console.log(error.response.data);
-            setErrorMessage(error.response.data.message);
-          } else if (error.request) {
-            setErrorMessage('Что-то с интернетом');
-          } else {
-            setErrorMessage('Неизвестная ошибка');
-          }
-        }
+        setErrorMessage(
+          error instanceof Error ? error.message : 'Неизвестная ошибка',
+        );
       })
       .finally(() => {
         setIsLoading(false);

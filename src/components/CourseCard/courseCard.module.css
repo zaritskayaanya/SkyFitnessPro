@@ -1,0 +1,13 @@
+.card {
+  display: block;
+  cursor: pointer;
+}
+
+.card:hover {
+  opacity: 0.95;
+}
+
+/* Курсор-указатель (рука) именно на кнопках добавления/удаления/входа */
+.cardAddButton {
+  cursor: pointer !important;
+}

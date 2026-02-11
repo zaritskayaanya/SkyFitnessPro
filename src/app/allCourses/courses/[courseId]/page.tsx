@@ -3,24 +3,51 @@
 import Image from 'next/image';
 import styles from './course.module.css';
 import BaseButton from '../../../../components/Button/Button';
-import { useAppSelector } from '../../../../store/store';
+import { useAppDispatch, useAppSelector } from '../../../../store/store';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { CourseTypes } from '../../../../sharedTyres/shared.Types';
-import { getCoursesId } from '../../../../servises/course/courseApi';
-import { AxiosError } from 'axios';
+import { getCoursesId, getCoursesMe } from '../../../../servises/course/courseApi';
 import { useModal } from '../../../../context/ModalContext';
 import { useCourse } from '../../../../hooks/useCourse';
+import { setMyCourseIds } from '../../../../store/features/courseSlise';
+import { saveMyCourseIds } from '../../../../store/features/courseStorage';
 
 export default function Course() {
   const user = useAppSelector((state) => state.auth.user);
+  const token = useAppSelector((state) => state.auth.token);
+  const myCourseIds = useAppSelector((state) => state.course.myCourseIds);
+  const dispatch = useAppDispatch();
   const params = useParams<{ courseId: string }>();
   const [isLoading, setIsLoading] = useState(false);
   const [course, setCourses] = useState<CourseTypes | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { openLogin } = useModal();
-  const courseID = params.courseId;
-  const { toggleAddRemove, isAdd } = useCourse(course);
+  const courseID =
+    typeof params.courseId === 'string'
+      ? params.courseId
+      : Array.isArray(params.courseId)
+        ? params.courseId[0]
+        : '';
+  const { toggleAddRemove, isAdd, isLoading: isCourseActionLoading } = useCourse(
+    course,
+    courseID || undefined,
+  );
+
+  // Подгружаем список «Мои курсы» с сервера, если в сторе пусто — чтобы при добавлении не затереть уже добавленные
+  useEffect(() => {
+    if (!token || myCourseIds.length > 0) return;
+    getCoursesMe(token)
+      .then((res) => {
+        const ids = res.user?.selectedCourses ?? [];
+        const serverIds = Array.isArray(ids) ? ids : [];
+        const merged = Array.from(new Set([...myCourseIds, ...serverIds]));
+        dispatch(setMyCourseIds(merged));
+        saveMyCourseIds(merged);
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- только при пустом myCourseIds
+  }, [token, myCourseIds.length, dispatch]);
 
   useEffect(() => {
     if (!courseID) return;
@@ -34,17 +61,7 @@ export default function Course() {
         setCourses(res);
       })
       .catch((err) => {
-        if (err instanceof AxiosError) {
-          if (err.response) {
-            console.log(err.response.data);
-            setError(err.response.data.message);
-          } else if (err.request) {
-            setError('Что-то с интернетом');
-          } else {
-            console.log('error:', error);
-            setError('Неизвестная ошибка');
-          }
-        }
+        setError(err instanceof Error ? err.message : 'Неизвестная ошибка');
       })
       .finally(() => {
         setIsLoading(false);
@@ -145,15 +162,21 @@ export default function Course() {
             {user &&
               (isAdd ? (
                 <BaseButton
-                  disabled={isLoading}
-                  onClick={toggleAddRemove}
+                  disabled={isLoading || isCourseActionLoading}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleAddRemove(e);
+                  }}
                   fullWidth={true}
                   text={'Удалить курс'}
                 />
               ) : (
                 <BaseButton
-                  disabled={isLoading}
-                  onClick={toggleAddRemove}
+                  disabled={isLoading || isCourseActionLoading}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleAddRemove(e);
+                  }}
                   fullWidth={true}
                   text={'Добавить курс'}
                 />

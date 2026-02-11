@@ -4,23 +4,14 @@ import styles from './me.module.css';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/store';
 import { logout } from '../../../../store/features/authSlice';
+import { clearAuthState } from '../../../../store/features/authSrorage';
 import Image from 'next/image';
 import CoursesBlock from '../../../../components/CoursesBlock/CoursesBlock';
 import { useRouter } from 'next/navigation';
-import { getCoursesMe, getProgressCourse } from '../../../../servises/course/courseApi';
-import { useEffect} from 'react';
-import {
-  setCompleted,
-  setCurrentProgressCourse,
-  setFetchError,
-  setFetchIsLoading,
-  setMyCourseIds,
-  setMyCourses,
-} from '../../../../store/features/courseSlise';
-import { AxiosError } from 'axios';
-import { ProgressWorkOutCourseTypes } from '../../../../sharedTyres/shared.Types';
-import { useCourseProgress } from '../../../../hooks/useCourseProgres';
-
+import { getCourses, getCoursesMe } from '../../../../servises/course/courseApi';
+import { useEffect, useRef } from 'react';
+import { setAllCourses, setFetchError, setFetchIsLoading, setMyCourseIds, setMyCourses } from '../../../../store/features/courseSlise';
+import { saveMyCourseIds } from '../../../../store/features/courseStorage';
 
 export default function MeCourses() {
   const user = useAppSelector((state) => state.auth.user);
@@ -29,55 +20,58 @@ export default function MeCourses() {
   const router = useRouter();
   const { allCourses, myCourseIds, fetchError, fetchIsLoading, myCourses } =
     useAppSelector((state) => state.course);
+  const hasFetchedUserCourses = useRef(false);
 
   const onLogout = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
+    clearAuthState();
     dispatch(logout());
     router.push('/');
   };
 
   useEffect(() => {
-    if (!token) {
+    if (!token || hasFetchedUserCourses.current) {
       return;
     }
+    hasFetchedUserCourses.current = true;
+    dispatch(setFetchIsLoading(true));
+    getCoursesMe(token)
+      .then((res) => {
+        const userObject = res.user;
+        const serverIds = userObject.selectedCourses ?? [];
+        const merged = Array.from(new Set([...myCourseIds, ...serverIds]));
+        dispatch(setMyCourseIds(merged));
+        saveMyCourseIds(merged);
+      })
+      .catch((err) => {
+        dispatch(
+          setFetchError(err instanceof Error ? err.message : 'Неизвестная ошибка'),
+        );
+        hasFetchedUserCourses.current = false;
+      })
+      .finally(() => {
+        dispatch(setFetchIsLoading(false));
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- один раз при монтировании
+  }, [dispatch, token]);
 
-    if (myCourseIds.length === 0 && !fetchIsLoading && !fetchError) {
-      dispatch(setFetchIsLoading(true));
-      getCoursesMe(token)
-        .then((res) => {
-          const userObject = res.user;
-          const meApiCourses = userObject.selectedCourses;
-          dispatch(setMyCourseIds(meApiCourses));
-        })
-        .catch((err) => {
-          if (err instanceof AxiosError) {
-            if (err.response) {
-              dispatch(setFetchError(err.response.data.message));
-            } else if (err.request) {
-              dispatch(setFetchError('Что-то с интернетом'));
-            } else {
-              console.log('error:', err);
-              dispatch(setFetchError('Неизвестная ошибка'));
-            }
-          }
-        })
-        .finally(() => {
-          dispatch(setFetchIsLoading(false));
-        });
-    }
-  }, [dispatch, token, myCourseIds.length, fetchIsLoading, fetchError]);
+  // Загружаем полный список курсов на профиле, если ещё не загружен (нужно для отображения всех «Мои курсы»)
+  useEffect(() => {
+    if (allCourses.length > 0) return;
+    getCourses()
+      .then((list) => dispatch(setAllCourses(list)))
+      .catch(() => {});
+  }, [allCourses.length, dispatch]);
 
   useEffect(() => {
-    if (myCourseIds.length > 0 && allCourses.length > 0) {
-      const filteredCourses = allCourses.filter((course) =>
-        myCourseIds.includes(course._id),
-      );
-
-      dispatch(setMyCourses(filteredCourses));
+    if (myCourseIds.length === 0 || allCourses.length === 0) {
+      return;
     }
+    const filteredCourses = myCourseIds
+      .map((id) => allCourses.find((c) => c._id === id))
+      .filter((c): c is NonNullable<typeof c> => c != null);
+    dispatch(setMyCourses(filteredCourses));
   }, [myCourseIds, allCourses, dispatch]);
-
-  
 
   if (fetchIsLoading) {
     return (

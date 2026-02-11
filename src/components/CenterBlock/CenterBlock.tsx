@@ -6,12 +6,6 @@ import BaseButton from '../Button/Button';
 import CoursesBlock from '../CoursesBlock/CoursesBlock';
 import { useAppSelector } from '../../store/store';
 
-// interface CenterBLockProps {
-//   courses: CourseTypes[];
-//   errorRes: string | null;
-//   isLoading: boolean;
-// }
-
 export default function CenterBlock() {
   const { fetchError, fetchIsLoading, allCourses } = useAppSelector(
     (state) => state.course,

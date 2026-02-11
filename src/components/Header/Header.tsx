@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import styles from './header.module.css';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -9,16 +9,15 @@ import { useAppSelector } from '../../store/store';
 import ModalUser from '../ModalUser/ModalUser';
 import { useModal } from '../../context/ModalContext';
 
+function useIsMounted(): boolean {
+  return useSyncExternalStore(() => () => {}, () => true, () => false);
+}
+
 export default function Header() {
   const user = useAppSelector((state) => state.auth.user);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const isMounted = useIsMounted();
   const { openLogin } = useModal();
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
@@ -35,31 +34,34 @@ export default function Header() {
             Онлайн-тренировки для занятий дома
           </p>
         </div>
-        {isMounted ? (
-          <>
-            {!user && (
-              <BaseButton
-                disabled={isLoading}
-                onClick={openLogin}
-                text="Войти"
-                fullWidth={false}
+        <>
+          {!isMounted ? (
+            <BaseButton
+              disabled={false}
+              onClick={() => {}}
+              text="Войти"
+              fullWidth={false}
+            />
+          ) : !user ? (
+            <BaseButton
+              disabled={false}
+              onClick={openLogin}
+              text="Войти"
+              fullWidth={false}
+            />
+          ) : (
+            <div className={styles.header__user} onClick={toggleModal}>
+              <Image
+                src="/img/Profile.png"
+                alt="profile"
+                width={50}
+                height={50}
               />
-            )}
-            {user && (
-              <div className={styles.header__user} onClick={toggleModal}>
-                <Image
-                  src="/img/Profile.png"
-                  alt="profile"
-                  width={50}
-                  height={50}
-                />
-                <p className={styles.header__userText}>{user}</p>
-              </div>
-            )}
-           
-          </>
-        ) : null}
-         {user && (isModalOpen ? <ModalUser /> : null)}
+              <p className={styles.header__userText}>{user}</p>
+            </div>
+          )}
+        </>
+        {user && (isModalOpen ? <ModalUser onClose={() => setIsModalOpen(false)} /> : null)}
       </div>
     </div>
   );

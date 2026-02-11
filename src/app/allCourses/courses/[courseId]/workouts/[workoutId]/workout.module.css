@@ -2,12 +2,32 @@
   max-width: 1160px;
   width: 100%;
   margin: 0 auto;
-  margin: 0 auto;
   background-color: #ffffff;
   @media screen and (max-width: 495px) {
     width: 100%;
     padding: 0px 16px;
   }
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  text-decoration: none;
+  margin-bottom: 16px;
+  transition: color 0.2s;
+}
+
+.backLink:hover {
+  color: #00C1FF;
+}
+
+.backArrow {
+  font-size: 20px;
+  line-height: 1;
 }
 
 .workoutTitle {
